@@ -1,0 +1,152 @@
+# Makefile to compile COSMOS software set on Max OS 10
+
+PROGS =  Sflats adjust-map align-mask apertures badorders biasflat  \
+        extract-spec 1dspec map-spectra mosaic \
+        spectral-lines spectral-map stitch subsky sumspec spec2big
+
+BASE  = $(COSMOS_HOME)
+CLARDY = $(BASE)/clardy
+PGLIB = $(BASE)/lib
+XLIB = /usr/X11R6/lib
+FITSLIB = /usr/local/lib
+FITSINC =  /usr/local/include
+PGINC = $(BASE)/include
+XINC = /usr/X11R6/X11/include
+CFLAGS =  -mcpu=7450 -mtune=7450
+C = gcc $(CFLAGS) 
+F77 = gfortran
+CC =    $C -I$(BASE)/include -I$(CLARDY)/include -DOPTUTILH="\"optutils.h\"" \
+        -DIOUTILH="\"ioutils.h\"" -DKDCUTILH="\"kdcutil.h\"" \
+		-DMASKDATH="\"maskdat.h\"" -DMGUTILH="\"mgutils.h\"" \
+		-DFEATSH="\"mgfeats.h\""
+CCC   = ${CC} -L$(BASE)/lib -L$(FITSLIB) -I$(FITSINC) -I$(PGINC) -I$(XINC) \
+        -lm -o $@  $@.c
+CSO   = $C  -fPIC -I$(BASE)/include -I$(FITSINC) -I$(PGINC) -I$(CLARDY)/include \
+         -L$(BASE)/lib -L$(FITSLIB) -DOPTUTILH="\"optutils.h\"" \
+         -DIOUTILH="\"ioutils.h\"" -DKDCUTILH="\"kdcutil.h\"" \
+         -DMASKDATH="\"maskdat.h\"" -DMGUTILH="\"mgutils.h\"" \
+         -DFEATSH="\"mgfeats.h\""
+
+all: libs progs
+
+# library files
+
+libs:  libimacs libspline libcosmos libimacs_x libcosmos_x libcosmopy
+
+libimacs:
+	cd $(CLARDY)/src; make 
+	
+libimacs_x:
+	cd $(CLARDY)/src; make libimacs_x
+
+libspline:
+	cd dierckx; make
+
+libcosmos:
+	${CC} -c readparm.c fp2ccd.c opencosparm.c order.c polyfuncs.c cJSON.c \
+                 readobsdef.c cos_utils.c cos_futils.c setupinstr.c
+	${AR} r libcosmos.a readparm.o fp2ccd.o opencosparm.o order.o cJSON.o\
+                polyfuncs.o readobsdef.o cos_utils.o cos_futils.o setupinstr.o
+	ranlib libcosmos.a
+	mv libcosmos.a $(BASE)/lib
+	rm readparm.o fp2ccd.o opencosparm.o order.o polyfuncs.o readobsdef.o \
+	cos_utils.o cos_futils.o setupinstr.o
+
+libcosmos_x:
+	${CC} -c -fPIC readparm.c fp2ccd.c opencosparm.c order.c polyfuncs.c cJSON.c\
+                 readobsdef.c cos_utils.c cos_futils.c setupinstr.c
+	${AR} r libcosmos_x.a readparm.o fp2ccd.o opencosparm.o order.o cJSON.o\
+                polyfuncs.o readobsdef.o cos_utils.o cos_futils.o setupinstr.o\
+
+	ranlib libcosmos_x.a
+	rm readparm.o fp2ccd.o opencosparm.o order.o polyfuncs.o readobsdef.o \
+	cos_utils.o cos_futils.o setupinstr.o cJSON.o
+
+libcosmopy:
+	${CSO}  -c readparm.c opencosparm.c readobsdef.c getslitxy8.c getmapxy8.c cJSON.c
+		gcc -shared -rpath $(BASE)/lib -o libcosmopy.so readparm.o opencosparm.o readobsdef.o\
+	  getslitxy8.o getmapxy8.o  libimacs_x.a libcosmos_x.a
+	mv $@.so ${BASE}/lib
+	rm readparm.o opencosparm.o readobsdef.o getslitxy8.o getmapxy8.o cJSON.o
+	
+
+# programs
+
+progs:    $(PROGS)
+
+
+1dspec:
+		${CCC} -lcosmos -limacs -lcfitsio
+		mv $@ $(BASE)/bin
+
+Sflats:
+	${CCC} -lcosmos -lcfitsio
+	mv $@ $(BASE)/bin
+
+adjust-map:
+	${CC} -c $@.c
+	${F77} -o $@ -L$(BASE)/lib -L$(PGLIB) -L$(XLIB) -L$(FITSLIB) $@.o \
+            -lcosmos -limacs -lcfitsio -lX11 -lpgplot -lcpgplot 
+	mv $@ $(BASE)/bin
+	rm $@.o
+
+align-mask:
+	${CC} -c $@.c
+	${F77} -o $@ -L$(BASE)/lib -L$(PGLIB) -L$(XLIB) -L$(FITSLIB) $@.o \
+            -lcosmos -limacs -lcfitsio -lX11 -lpgplot -lcpgplot 
+	mv $@ $(BASE)/bin
+	rm $@.o
+	
+apertures:
+	${CCC} -lcosmos -limacs
+	mv $@ $(BASE)/bin
+
+badorders:
+	${CCC} -lcosmos -limacs -lcfitsio
+	mv $@ $(BASE)/bin
+
+biasflat: 
+	${CCC} -lcosmos -lcfitsio
+	mv $@ $(BASE)/bin
+
+extract-spec:
+	${CC} -c $@.c
+	${F77} -o $@ -L$(BASE)/lib -L$(PGLIB) -L$(XLIB) -L$(FITSLIB) $@.o \
+            -lcfitsio -lX11 -lspline -lpgplot -lcpgplot -lcosmos 
+	mv $@ $(BASE)/bin
+	rm $@.o
+
+map-spectra:
+	${CCC} -lcosmos -limacs
+	mv $@ $(BASE)/bin
+
+mosaic:
+	${CCC} -lcosmos -lcfitsio
+	mv $@ $(BASE)/bin
+
+spectral-lines:
+	${CCC} -lcosmos -limacs
+	mv $@ $(BASE)/bin
+
+spectral-map:
+	${CCC} -lcosmos
+	mv $@ $(BASE)/bin
+  
+stitch:
+	${CCC} -lcosmos -lcfitsio
+	mv $@ $(BASE)/bin
+
+subsky:
+	${CC} -c $@.c
+	${F77} -o $@ -L$(BASE)/lib -L$(PGLIB) -L$(XLIB) -L$(FITSLIB) $@.o \
+            -lcosmos -lcfitsio -lX11 -lspline -lpgplot -lcpgplot 
+	mv $@ $(BASE)/bin
+	rm $@.o
+
+sumspec:
+	${CCC} -lcosmos -lcfitsio
+	mv $@ $(BASE)/bin
+
+spec2big:
+	${CCC} -lcosmos -lcfitsio
+	mv $@ $(BASE)/bin

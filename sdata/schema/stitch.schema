@@ -1,0 +1,26 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"stitch schema",
+"type":		"object",
+"properties":	{
+	"BIAS_FILE":  {
+		"type":  "string",
+		"description":  "bias frame"},
+	"GAIN1":  {
+		"type":  "number",
+		"description":  "chip 1 gain"},
+	"GAIN2":  {
+		"type":  "number",
+		"description":  "chip2 gain"},
+	"GAIN3":  {
+		"type":  "number",
+		"description":  "chip3 gain"},
+	"GAIN4":  {
+		"type":  "number",
+		"description":  "chip4 gain"},
+	"DEWAR":  {
+		"type":  "string",
+		"enum":	 ["LDSS3-2","LDSS3C-2","LDSS3-4"],
+		"description":  "dewar name"}
+	}
+}

@@ -1,0 +1,32 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"Sflats schema",
+"type":		"object",
+"properties":	{
+	"MINLAMBDA":  {
+		"type":  "number",
+		"description":  "min wavelength of extraction"},
+	"MAXLAMBDA":  {
+		"type":  "number",
+		"description":  "max wavelength of extraction"},
+	"TELSCALE":  {
+		"type":  "number",
+		"description":  "telescope scale sec per mm"},
+	"BIAS_FILE":  {
+		"type":  "string",
+		"description":  "bias level file"},
+	"ORDER":  {
+		"type":  "integer",
+		"description":  "order of flat intensity fit"},
+	"FIT_MODE":  {
+		"type":  "string",
+		"enum":  ["median","poly"],
+		"description":  "method of spectrum fitting"},
+	"MED_BOX":  {
+		"type":  "integer",
+		"description":  "size of sky fit median box"},
+	"SHUFFLED":  {
+		"type":  "integer",
+		"description":  "number of pixels to shuffle data"}
+	}
+}

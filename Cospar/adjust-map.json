@@ -1,0 +1,21 @@
+{
+"ORD_TILT": 0, 
+"SEARCH_HGT": 5, 
+"ORD_SAG": 2, 
+"ITERATIONS": 2, 
+"SEARCH_WID": 5, 
+"ORD_DISP": "3", 
+"LINELIST": "HeNeAr.dat", 
+"OUTLIER-WT": true, 
+"HISTOGRAM": false, 
+"FIT_TILT": false, 
+"EDGE": 2, 
+"SIGLIMIT": 4.0, 
+"H_ORD_DISP": 1, 
+"NCLUMP": 6, 
+"S_SIGLIMIT": 4.0, 
+"SLIT_WIDTH": 6, 
+"H_ORD_SAG": 1, 
+"T_SIGLIMIT": 4.0, 
+"MINLINES": 5
+}

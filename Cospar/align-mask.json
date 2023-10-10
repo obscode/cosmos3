@@ -1,0 +1,13 @@
+{
+"LAMFILE": "HeNeAr.dat", 
+"MISALIGN": true, 
+"AUTO": false, 
+"MAGFACTOR": 100, 
+"USE_HOLES": true, 
+"WINDOWSIZE": 12, 
+"SIGLIMIT": 10, 
+"NAVER": 1, 
+"THRESHOLD": 0.01, 
+"MAXFLUX": 256000.0, 
+"SEARCHBOX": 10
+}

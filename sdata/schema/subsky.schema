@@ -1,0 +1,47 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"subsky schema",
+"type":		"object",
+"properties":	{
+	"MINLAMBDA":  {
+		"type":  "number",
+		"description":  "min wavelength of extraction"},
+	"MAXLAMBDA":  {
+		"type":  "number",
+		"description":  "max wavelength of extraction"},
+	"EXCLUDE":  {
+		"type":  "integer",
+		"description":  "half width of exclusion region"},
+	"DELTAKNOT":  {
+		"type":  "number",
+		"description":  "dispersion knot interval"},
+	"SPL_ORDER":  {
+		"type":  "integer",
+		"enum":  [3,5],
+		"description":  "order of dispersion spline fit to sky"},
+	"2D_SPLINE":  {
+		"type":  "boolean",
+		"description":  "Perform 2-d spline fit to spectra?"},
+	"MEDBOX":  {
+		"type":  "integer",
+		"description":  "boxsize for running median CR rejection"},
+	"SIGLIMIT":  {
+		"type":  "number",
+		"description":  "CR rejection threshold in sigmas"},
+	"DIAG_0":  {
+		"type":  "number",
+		"description":  "lower limit of diagnostic range"},
+	"DIAG_1":  {
+		"type":  "number",
+		"description":  "upper limit of diagnostic range"},
+	"EDGE":  {
+		"type":  "integer",
+		"description":  "excluded edge of spectrum"},
+	"NOISE":  {
+		"type":  "number",
+		"description":  "CCD read noise"},
+	"GAIN":  {
+		"type":  "number",
+		"description":  "CCD gain"}
+	}
+}

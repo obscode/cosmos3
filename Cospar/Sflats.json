@@ -1,0 +1,10 @@
+{
+"SHUFFLED": 0, 
+"FIT_MODE": "median", 
+"MED_BOX": 30, 
+"BIAS_FILE": "none", 
+"TELSCALE": 3.0, 
+"MAXLAMBDA": 0.0, 
+"MINLAMBDA": 0.0, 
+"ORDER": 3
+}

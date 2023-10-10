@@ -1,0 +1,74 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"adjust-map schema",
+"type":		"object",
+"properties":	{
+	"SEARCH_HGT":  {
+		"type":  "integer",
+		"description":  "half height of search range"},
+	"SEARCH_WID":  {
+		"type":  "integer",
+		"description":  "half-width of search range"},
+	"SLIT_WIDTH":  {
+		"type":  "integer",
+		"description":  "slit width"},
+	"ORD_DISP":  {
+		"type":  "integer",
+		"minimum":   0,
+		"maximum":   7,
+		"description":  "slit order of dispersion error fit"},
+	"ORD_SAG":  {
+		"type":  "integer",
+		"minimum":   0,
+		"maximum":   5,
+		"description":  "slit order of y-distortion error fit"},
+	"ORD_TILT":  {
+		"type":  "integer",
+		"minimum":   0,
+		"maximum":   5,
+		"description":  "slit order of tilt error fit"},
+	"FIT_TILT":  {
+		"type":  "boolean",
+		"description":  "fit slit tilt?"},
+	"H_ORD_DISP":  {
+		"type":  "integer",
+		"minimum":   0,
+		"maximum":   7,
+		"description":  "hole order of dispersion error fit"},
+	"H_ORD_SAG":  {
+		"type":  "integer",
+		"minimum":   0,
+		"maximum":   5,
+		"description":  "hole order of y-distortion error fit"},
+	"MINLINES":  {
+		"type":  "integer",
+		"description":  "minimum # of lines for tweak"},
+	"LINELIST":  {
+		"type":  "string",
+		"description":  "line list file"},
+	"EDGE":  {
+		"type":  "integer",
+		"description":  "slit edge to exclude"},
+	"SIGLIMIT":  {
+		"type":  "number",
+		"description":  "line rejection threshold in dispersion"},
+	"S_SIGLIMIT":  {
+		"type":  "number",
+		"description":  "line rejection threshold in y-distortion"},
+	"T_SIGLIMIT":  {
+		"type":  "number",
+		"description":  "line rejection threshold in tilt"},
+	"ITERATIONS":  {
+		"type":  "integer",
+		"description":  "number of iterations"},
+	"OUTLIER-WT":  {
+		"type":  "boolean",
+		"description":  "underweight outlying point?"},
+	"NCLUMP":  {
+		"type":  "integer",
+		"description":  "number of points in clumps for underweight"},
+	"HISTOGRAM":  {
+		"type":  "boolean",
+		"description":  "use histogram to reject lines outside search region?"}
+	}
+}

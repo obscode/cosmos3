@@ -1,0 +1,9 @@
+{
+"SHUFFLE": 0, 
+"LAMBDA0": 4700.0, 
+"HWIDTH": 3.0, 
+"LAMBDA1": 7900.0, 
+"LINEFILE": "night_sky.dat", 
+"BORDER": 2, 
+"ORDERS": "023"
+}

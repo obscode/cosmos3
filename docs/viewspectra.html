@@ -1,0 +1,184 @@
+<html>
+<head>
+  <title>viewspectra</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>viewspectra</h1>
+<p>
+<b>viewspectra</b> is a graphical tool for viewing 1-d or 2-d spectra, either single
+spectra or spectral stacks produced with extract or extract-2dspec.
+</p>
+<br>
+
+<p>
+<table width=100%>
+<tr><td width="150px">USAGE<td><code>viewspectra</code>
+<tr><td>INPUT<td>none
+<tr><td>OUTPUT<td>none
+<tr><td valign="top">PARAMETERS<td>
+  <table width=100%>
+  <tr><td width="100px"><b>smooth</b><td>smoothing width, in angstroms
+  <tr><td><b>linelist</b><td>file with list of object lines, for identification and analysis
+  <tr><td><b>halfwdth</b><td>halfwidth, in rows, of extraction strip for 2-d spectra
+  <tr><td><b>shuffle</b><td>subtract shuffled region?
+  <tr><td><b>nod</b><td>nod distance, in pixels, for nod & shuffle data
+  <tr><td><b>lamint</b><td>halfwidth, in Angstroms, of line examination window
+  <tr><td><b>lambda0</b><td>minimum wavelength to display
+  <tr><td><b>lambda1</b><td>maximum wavelength to display
+  </table>
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+The main <b>viewspectra</b> window looks like this:
+</p>
+<img src="images/viewspectra.gif" alt="viewspectra gui" hspace="50" vspace="50">
+<br>
+
+<h3>Menus</h3>
+<p>
+The <b>file</b> menu does the usual. Note that, in specifying a file name, you need
+not include the <code>.fits</code> extension.
+</p>
+<p>
+The <b>edit</b> menu allows one to change some of the parameters set in the
+viewspectra.par file, as well as other parameters.
+</p>
+<img src="images/preferences.gif" alt="preferences gui" hspace="50" vspace="50">
+<p>
+The <b>line list file</b> may contain a list of candidate object lines, to aid in line
+identification. It's format is as follows:
+<pre>
+    wavelength      type      label     name
+</pre>
+type may be 0, 1, or 2. Lines of type  are displayed in blue, type 1 in green,
+and type 2 in red. The label and name are optional. The label parameter
+identifies the line in the display.  The name is used in connection with the
+<b>line buttons</b> option.  If <b>line buttons</b> is set a another window is opened with
+one button for each line in the line list file which has a name specified:<br>
+</p>
+<img src="images/lines.gif" alt="lines gui" hspace="50" vspace="50">
+<p>
+Pressing a button inserts the wavelength of that line into the <b>Rest Lambda</b> box
+(for which see below).
+</p>
+<p>
+If a <b>log file</b> name is specified, then  a record of the session is maintained in
+a log file. This record includes the name of each object whose spectrum is
+displayed, and parameters of each line measured in each object. Be sure that
+this entry is blank if no logfile is desired.
+</p>
+<p>
+The <b>EW/(1+z)</b> button affects the calculation of equivalent widths in the line
+examination window. If this button is set, than measured equivalent widths are
+adjusted to rest frame values, using the current value of the redshift.
+</p>
+<p>
+The <b>Autoscale</b> button determines whether the gray scale levels of the spectrum
+image are calculated automatically, or are set the the values specified in the
+<b>Min, max inten</b> boxes.
+</p>
+<br>
+
+<h3>Plots</h3>
+<p>
+The upper plot is a trace of the spectrum. If the <code>lambda0</code> and <code>lambda1</code>
+parameters are set to values within the range of the data, only values within
+the smaller range are displayed. If a 2-d spectrum, the displayed spectrum is
+extracted in a strip centered on the expected slit position of the object +-
+the number of rows specified with the <code>halfwdth</code> parameter. If parameter <code>nod</code> is set to
+a non-zero value, the trace is the sum of the spectrum in the strip and the
+negative of the spectrum in a strip offset by nod distance.
+The lower plot is a gray-scale image of the spectrum (if 2-d). If <code>shuffle</code> is
+set to "yes", it is the image of the difference between the two shuffled
+spectra. Clicking on a row within this image changes the central extraction
+line for the upper plot. The current extraction ranges are indicated by the
+boxes at the end of the spectra. <b>viewspectra</b> usually does a good job of
+calculating appropriate intensity ranges for the spectrum image. However, if
+the range needs changing, clicking the right mouse button within the lower
+window brings up a pop-up window:
+</p>
+<img src="images/contrast.gif" alt="contrast gui" hspace="50" vspace="50">
+<p>
+New values entered take effect when a carriage return is hit, or when Done is
+pressed.
+</p>
+<br>
+
+<h3>Buttons</h3>
+<h4>View buttons</h4>
+
+<table width=100%>
+<tr><td width="100px" valign="top"><b>Zoom:</b><td>zoom in on the plots. Move the mouse to the lower left hand corner of the region desired, click and hold while moving to the upper right hand corner, then release. The x2 and /2 buttons zoom the vertical scales up and down by factors of two.
+<tr><td valign="top"><b>Unzoom:</b><td>go back to full plot
+<tr><td valign="top"><b>Print:</b><td>creates a postscript file of the current spectrum plot, names
+pgplot.ps.
+<tr><td valign="top"><b>Examine:</b><td>opens the line examination window, centered on the wavelength specified in the Lambda window.
+</table>
+<br>
+
+<p>
+If the opened file is a stack of 1-d or 2-d spectra, then the following buttons
+allow one to move between spectra:
+</p>
+<table width=100%>
+<tr><td width="100px" valign="top"><b>&lt; &gt;</b><td>move forward or back one spectrum.
+<tr><td valign="top"><b>goto:</b><td>enter a spectrum number and hit return, to move to that spectrum.
+</table>
+<br>
+
+<h4>Line ID buttons</h4>
+<table width=100%>
+<tr><td width="100px" valign="top"><b>Lambda:</b><td>displays the wavelength of a feature pointed to with a mouse click, or calculated in the line examination window (see below).
+<tr><td valign="top"><b>Rest Lambda:</b><td>used in combination with a value in the Lambda box to calculate the redshift
+<tr><td valign="top"><b>z:</b><td>redshift, calculated from Rest Lambda and Lambda, or entered for use with Try. Entering a value followed by &lt;return&gt; executes Try.
+<tr><td valign="top"><b>Try:</b><td>displays, in the spectrum plot,  the expected wavelengths of the lines listed in the <code>linelist</code> file, for the redshift in the z box. The buttons to the right of the Try button set which of the three types of lines are displayed.
+</table>
+<br>
+
+<h3>Line examination window</h3>
+<img src="images/examine.gif" alt="examine gui" hspace="50" vspace="50">
+<p>
+The line examination window shows a section of spectrum, centered on the
+wavelength given in the Lambda window, and of halfwidth set by the
+<code>lamint</code> parameter. The black plot is the raw, unsmoothed spectrum; the blue plot
+is the smoothed spectrum, as displayed in the main spectrum window. Spectral
+lines may be fit with a Gaussian by clicking on two points to the left and
+right of the line, at wavelengths which are the minimum and maximum wavelengths
+over which the fit is to be made, and at flux levels which specify the
+continuum levels at these two wavelengths. The continuum is set to a straight
+line between these two points, subtracted off, and a Gaussian fit to the
+remaining flux. The results for line center, standard deviation and equivalent
+width (corrected, if set in preferences, to rest frame values) , all in
+Angstroms, are displayed in the Lambda, sigma and EW boxes. The redshift, z, is
+recalculated on the basis of the Rest Lambda and the new line center. <i>A rest
+wavelength must be specified for all of this to work correctly.</i>
+</p>
+<p>
+The Clear button clears the current fit; the Done button closes the window. The
+Record button writes the Rest lambda, Lambda, z, sigma, and EW values into the
+log file, if data logging is switched on.
+</p>
+<br>
+
+<h3>Shortcuts</h3>
+<p>As of COSMOS 2.21, there are a few key bindings for convenience.</p>
+<p>Currently, the plot of the 1-D spectrum does not fit in the frame, and you
+have to scroll with the mouse wheel in order to see parts of the plot. At the
+moment, this cannot be avoided for laptops with smaller screens, but if you
+are using a separate monitor, you can switch to a window that has the proper
+dimensions by pressing the number "2" on your keyboard. If you need to switch
+back to the older window dimensions, for some reason, you can do so by
+pressing the number "1".</p>
+<p>You can also quit <b>viewspectra</b> by pressing "q" on your keyboard.</p>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>
+

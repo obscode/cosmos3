@@ -1,0 +1,40 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"align-mask schema",
+"type":		"object",
+"properties":	{
+	"SEARCHBOX":  {
+		"type":  "integer",
+		"description":  "half width of search range"},
+	"MAGFACTOR":  {
+		"type":  "integer",
+		"description":  "magnification factor for offset vectors"},
+	"LAMFILE":  {
+		"type":  "string",
+		"description":  "line list file"},
+	"NAVER":  {
+		"type":  "integer",
+		"description":  "number of neighboring points to average"},
+	"THRESHOLD":  {
+		"type":  "number",
+		"description":  "minimum flux ratio spot to background"},
+	"SIGLIMIT":  {
+		"type":  "number",
+		"description":  "line rejection threshold"},
+	"MAXFLUX":  {
+		"type":  "number",
+		"description":  "maximum flux"},
+	"WINDOWSIZE":  {
+		"type":  "number",
+		"description":  "width of PGPLOT window in inches"},
+	"MISALIGN":  {
+		"type":  "boolean",
+		"description":  "adjust disperser misalignment?"},
+	"USE_HOLES":  {
+		"type":  "boolean",
+		"description":  "include alignment holes?"},
+	"AUTO":  {
+		"type":  "boolean",
+		"description":  "automatic fit?"}
+	}
+}

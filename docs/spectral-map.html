@@ -1,0 +1,57 @@
+<html>
+<head>
+  <title>spectral-map</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>spectral-map</h1>
+<p>
+<b>spectral-map</b> uses the information in an spectral map to calculate the expected
+locations, on each chip, of spectral lines. as well as their location on an 8-
+chip mosaic. Output is a file containing coordinate information, aperture type,
+and object name.
+</p>
+<br>
+
+<p>
+<table width=100%>
+<tr><td width="100px">USAGE<td><code>spectral-map  <i>-m mapfile  -l linefile  -b binning[-c] [-e]</i></code>
+<tr><td valign="top">INPUT<td>
+  <table width=100%>
+  <tr><td><code>mapfile.map</code> is the applicable spectral map file
+  <tr><td><code>linefile</code> is either one wavelength, or a file with a list of wavelengths to be plotted
+  <tr><td><code>binning</code> is the binning of the CCD data
+  </table>
+<tr><td>OUTPUT<td><code>mapfile.xy</code> aperture data file
+<tr><td>PARAMETERS<td>none
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+The <code>binning</code> parameter can be a single number (1,2,4) or a double number (i.e.
+12) if binning is different in the x and y directions.
+If linefile is a number (i.e. contains no alphabetical characters) it is
+interpreted as a single wavelength for the linelist.  If the flag -c is
+included, <b>spectral-lines</b> calculates the positions of objects along the slit
+rather that the slit center; if the flag -e is included,  the two ends of the
+slit are marked instead.
+</p>
+<br>
+
+<p>
+Each line of the output file has the following format:
+
+<pre>
+X(mosaic)   Y(mosaic)   Object #    ObjectName   Chip      X(ccd)     Y(ccd)  Wavelength
+</pre>
+</p>
+<br>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>

@@ -1,0 +1,61 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"extract-spec schema",
+"type":		"object",
+"properties":	{
+	"DIMENSION":  {
+		"type":  "integer",
+		"description":  "dimension of extraction"},
+	"DELTALAM":  {
+		"type":  "number",
+		"description":  "wavelength step"},
+	"DELTASLIT":  {
+		"type":  "number",
+		"description":  "slit postion interval in arcseconds"},
+	"MINLAMBDA":  {
+		"type":  "number",
+		"description":  "min wavelength of extraction"},
+	"MAXLAMBDA":  {
+		"type":  "number",
+		"description":  "max wavelength of extraction"},
+	"SEARCH":  {
+		"type":  "integer",
+		"description":  "half width of search region"},
+	"TRACE":  {
+		"type":  "string",
+		"enum":  ["star", "object", "none"],
+		"description":  "spectrum trace method"},
+	"TRACE_ORDR":  {
+		"type":  "integer",
+		"description":  "order of fit to spectrum trace"},
+	"ALIGN":  {
+		"type":  "string",
+		"enum":  ["star_ave", "object_ave", "object_each", "none"],
+		"description":  "alignment method"},
+	"OBJ_FRAC":  {
+		"type":  "number",
+		"description":  "fraction of galaxies used for alignment"},
+	"INIT_OFF":  {
+		"type":  "number",
+		"description":  "initial object offset guess"},
+	"SUB_NS":  {
+		"type":  "boolean",
+		"description":  "subtract shuffled region of n&s data?"},
+	"SAMPLING":  {
+		"type":  "string",
+		"enum":  ["linear", "log"],
+		"description":  "linear or log sampling"},
+	"EDGE":  {
+		"type":  "integer",
+		"description":  "excluded edge of spectrum"},
+	"USE_HOLES":  {
+		"type":  "boolean",
+		"description":  "extract alignment stars?"},
+	"HWIDTH":  {
+		"type":  "integer",
+		"description":  "half width of 1-d extraction window"},
+	"GAIN":  {
+		"type":  "number",
+		"description":  "gain e-/hdu"}
+	}
+}

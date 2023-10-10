@@ -1,0 +1,430 @@
+#!/usr/bin/perl
+#
+#  PROCESS_SPEC constructs a Make file for processing a set of 2-d spectra
+#
+#  Version:  15 Mar 2018
+
+
+#input data
+
+#1-d or 2-d extraction?
+$PRDR=$ENV{'COSMOS_PAR_DIR'};
+$pfil=$PRDR."/extract-spec.json";
+if( !(-e $pfil)){die ("Cannot find extract-spec parameter file $pfil");}
+open(EPFILE,$pfil);
+$dimen=0;
+my @parms=<EPFILE>;
+foreach(@parms){
+  chop;
+  if(m("DIMENSION")){
+    $dimen=$_;
+    $dimen=~s/,//;
+    $dimen=~s/\"DIMENSION\":\s+(\d).*/\1/;
+    break;}
+  }
+close(EPFILE);
+if($dimen==0){ die("extract-spec parameter file error");}
+$sfile="$dimen"."spec";
+$IMDR="\$\(COSMOS_IMAGE_DIR\)\/";
+@alpha=('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q');
+$pset=shift;
+if($pset ne "" && -e $pset.".pset"){
+  $pset.=".pset";
+  open(PSET,"$pset");
+  $_=<PSET>;
+  chop;
+  ($type,$specset)=split;
+  if($type ne "Spectrum_set:"){die "process set error 1\n";}
+  $make=$specset.".make";
+  open OUT,">$make";
+  $_=<PSET>;
+  chop;
+  ($type,$obsdef)=split;
+  if($type ne "obsdef_file:") {die "process set error 2\n";}
+  $_=<PSET>;
+  chop;
+  ($type,$bad)=split;
+  if($type ne "bad_pixel_file:") {die "process set error 3\n";}
+  $nspec=0;
+  $_=<PSET>;
+  chop;
+  if($_=~/File_prefix:/){
+    s/File_prefix:\s*//;
+    $fpfx=$_;
+    $_=<PSET>;}
+  else{
+      $fpfx="ccd";}
+while(<PSET>){
+    chop;
+   if(!($_=~/Science_frame:/)){die "process set error 4\n";}
+    s/Science_frame:\s*//;
+    $sciframe[$nspec]=$fpfx.$_;
+    $_=<PSET>;
+    chop;
+    if(!($_=~/Bias_frame:/)){die "process set error 5\n";}
+    s/Bias_frame:\s*//;
+      $bias[$nspec]=$_;
+    $_=<PSET>;
+    chop;
+    if(!($_=~/Comparison_arcs:/)){die "process set error 6\n";}
+    s/Comparison_arcs:\s*//;
+    $arcs[$nspec]=$_;
+    $_=<PSET>;
+    chop;
+    if(!($_=~/Flat_frames:/)){die "process set error 7\n";}
+    s/Flat_frames:\s*//;
+      $flats[$nspec]=$_;
+    $nspec++;
+    $_=<PSET>;}
+  }
+  else{
+    print "\nSpectrum set:           ";
+    $specset=<STDIN>;
+    chop($specset);
+    $make=$specset.".make";
+    open OUT,">$make";
+    $pset=$specset.".pset";
+    open PSET,">$pset";
+    print PSET "Spectrum\_set:   $specset\n";
+
+    print "Associated obsdef file: ";
+    $obsdef=<STDIN>;
+    chop($obsdef);
+    print PSET "obsdef_file:    $obsdef\n";
+
+    print "Bad pixel file:         ";
+    $bad=<STDIN>;
+    chop($bad);
+    print PSET "bad_pixel_file: $bad\n";
+
+    print "File prefix:            ";
+    $fpfx=<STDIN>;
+    chop($fpfx);
+    print PSET "File_prefix:    $fpfx\n\n";
+
+    $nspec=0;
+    while(){
+      print "\nScience frame #         ";
+      chop($_=<STDIN>);
+      if(!/\d/){last;}
+      print PSET "Science_frame:   $_\n";
+      $sciframe[$nspec]=$fpfx.$_;
+
+      print "    Bias frame:         ";
+      chop($_=<STDIN>);
+      if(!(/[^0-9]/)){$_=$fpfx.$_;}
+      $bias[$nspec]=$_;
+      print PSET "Bias_frame:      $bias[$nspec]\n";
+
+      print "    Comparison arcs:    ";
+      chop($_=<STDIN>);
+      $arcs[$nspec]=$_;
+      print PSET "Comparison_arcs: $arcs[$nspec]\n";
+
+      print "    Flat frames:        ";
+      chop($_=<STDIN>);
+      $flats[$nspec]=$_;
+      print PSET "Flat_frames:     $flats[$nspec]\n\n";
+      $nspec++;
+    }
+  }
+
+#construct make file
+
+#check for LDSS3 files needing stitching
+
+$stitch=$nstch=0;
+$chp="c1";
+$chpb="_c1";
+$fra=$ENV{'COSMOS_IMAGE_DIR'}."/".$sciframe[0]."c1.fits";
+if(!(-e $fra)){die "Frame $fra cannot be found\n";}
+$status=0;
+open(FITSFILE,$fra);
+$instrmnt=0;
+$nopamps=0;
+for($i=0;$i<144;$i++){
+	read FITSFILE, $line, 80;
+	if($line=~/^END/){
+		break;}
+	if($line=~/INSTRUME/){
+		if($line=~/LDSS3/){
+			$instrmnt=1;
+			$chp=$chpb="";}
+		else{
+			$instrmnt=-1;
+			break;}
+		next;}
+	if($line=~/NOPAMPS/){
+		$line=~s/NOPAMPS\s*=\s*(\d+).*/\1/;
+		$nopamps=$line;
+		if($nopamps>1){
+			$stitch=1;}
+		else{
+			$stitch=0;}
+		next;}
+	if($nopamps && $instrmnt){break;}
+	}
+if($instrmnt>0	&& $nopamps==0){die "Frame $fra header error\n";}
+$fltyp="s";
+
+#map files
+
+for($i=0;$i<$nspec;$i++){
+  $_=$arcs[$i];
+  @a=split;
+  $narc=@a;
+  if($narc==1){
+    $ccd=$a[0];
+    addtolist($ccd);
+    addtobias($ccd);}
+  else{
+    @a = sort {$a <=> $b} @a;
+    $j=length($a[0]);
+    if(length($a[1])<$j){$j=length($a[1]);}
+    for($k=0;$k<$j;$k++){
+	    if(substr($a[0],$k,1) ne substr($a[1],$k,1)){last;}
+      }
+    $ccd=$a[0]."-";
+    $ccd.=substr($a[1],$k);
+    addtolist($a[0]);
+    addtolist($a[1]);
+    addtobias($a[0]);
+    addtobias($a[1]);}
+  $mapfile[$i]=$fpfx."$ccd"."_b";}
+
+#force processing order
+
+$all="all: ";
+for($i=0;$i<$nspec;$i++){
+  $all.=$IMDR."$sciframe[$i]"."_s$chpb.fits ";}
+for($i=0;$i<$nspec;$i++){
+  $all.=$IMDR."$sciframe[$i]"."_$sfile.fits ";}
+if($nspec>1){
+  $all.=$IMDR.$specset."_$sfile.fits";}
+print OUT "$all\n\n";
+
+#final spectrum
+
+if($nspec>1){
+    $line = $IMDR.$specset."_$sfile.fits: $PRDR/sumspec.json";
+    for($i=0;$i<$nspec;$i++){
+	$line.= " $IMDR".$sciframe[$i]."_$sfile.fits";}
+    print OUT "$line\n";
+    $line = "\tsumspec -o $specset"."_$sfile ";
+    for($i=0;$i<$nspec;$i++){
+	$line.=" $sciframe[$i]";}
+    print OUT "$line\n";}
+
+#extract
+
+for($i=0;$i<$nspec;$i++){
+  addtolist($sciframe[$i]);
+  $line=$IMDR."$sciframe[$i]"."_$sfile.fits: $PRDR/extract-spec.json $IMDR"."$sciframe[$i]"."_".$fltyp."$chpb.fits $mapfile[$i]".".map";
+  print OUT "\n$line\n";
+  $line="\textract-spec -m $mapfile[$i] -f $sciframe[$i]"."_".$fltyp;
+  print OUT "$line\n";}
+
+
+
+#map files again
+
+$line=$obsdef.".map: $PRDR/map-spectra.json $obsdef."."obsdef";
+print OUT "\n$line\n";
+$line="\tmap-spectra $obsdef";
+print OUT "$line\n";
+
+for($i=0;$i<$nspec;$i++){
+    $copy=0;
+    if($i>0){
+	for($j=0;$j<$i;$j++){
+	    if($mapfile[$i] eq $mapfile[$j]){
+		$copy=1;
+		last;}
+	    }
+	if($copy==1){next;}
+        }
+    $_=$arcs[$i];
+    @a=split;
+    $narc=@a;
+    if($narc==1){
+	$line=$mapfile[$i].".map: $PRDR/adjust-map.json".
+	    " $obsdef.map $IMDR"."$mapfile[$i]"."$chpb.fits";
+	print OUT "\n$line\n";
+	$line="\tadjust-map -m $obsdef -f $mapfile[$i]";
+	print OUT "$line\n";}
+    else{
+	$line=$mapfile[$i].".map: $PRDR/adjust-map.json".
+	    " $obsdef.map $IMDR".$fpfx.$a[0]."_b$chpb.fits $IMDR".$fpfx.$a[1].
+            "_b$chpb.fits";
+	print OUT "\n$line\n";
+	$line="\tadjust-map -m $obsdef -f ccd$a[0]_b"." ccd$a[1]_b";
+	print OUT "$line\n";}
+    }
+
+#flat files
+
+for($i=0;$i<$nspec;$i++){
+  $_=$flats[$i];
+  if(/[Nn][oO][Nn][Ee]/){
+    $offile[$i]="none";
+    next;}
+  @a=split;
+  $nflat=@a;
+  if($nflat==1){
+    addtolist($a[0]);
+    $ccd=$a[0];}
+
+  else{
+    @a = sort {$a <=> $b} @a;
+    $ccd=$a[0];
+    addtolist($a[0]);
+    for($l=1;$l<$nflat;$l++){
+      addtolist($a[1]);
+	    $ccd.="-";
+	    $j=length($a[$l-1]);
+	    if(length($a[$l])<$j){$j=length($a[$l]);}
+	    for($k=0;$k<$j;$k++){
+        if(substr($a[$l-1],$k,1) ne substr($a[$l],$k,1)){last;}
+                }
+	    $ccd.=substr($a[$l],$k);}
+  }
+  $flatfile[$i]=$fpfx."$ccd";
+  $offile[$i]="$flatfile[$i]";
+  $ofline[$i]="";
+  $brkk=0;
+  if($i>0){
+    for($j=0;$j<$i;$j++){
+	    if($flatfile[$i] eq $flatfile[$j]){
+        if($mapfile[$i] eq $mapfile[$j] || $flatfile[$i] eq "none"){
+          $brkk=1;
+          last;}
+        $offile[$i].="$alpha[$i]";
+        $ofline[$i]="-o $offile[$i]";
+        last;}
+    }
+    if($brkk) {next;}
+    }
+
+  if($nflat==1){
+    $line=$IMDR.$offile[$i]."_flat$chpb.fits: $PRDR/Sflats.json"
+    ." $mapfile[$i]".".map ".$IMDR."$flatfile[$i]"."$chp.fits ";
+    if(!($bias[$i]=~/none/)){
+	    $line.=$IMDR.$bias[$i]."$chp.fits ";}
+    if(!($bad=~/none/)){
+      $line.=$bad.".badpix";}
+    print OUT "\n$line\n";
+    $line="\tSflats -m $mapfile[$i] -f $flatfile[$i] -b $bias[$i] $ofline[$i]";
+    if(!($bad=~/none/)){
+      $line.=" -z ".$bad;}
+    print OUT "$line\n";}
+  else{
+    $line=$IMDR.$offile[$i]."_flat$chpb.fits: $PRDR/Sflats.json".
+    " $mapfile[$i]".".map ";
+    if(!($bias[$i]=~/none/)){
+	    $line.=$IMDR.$bias[$i]."$chp.fits ";}
+    for($j=0;$j<$nflat;$j++){$line.=$IMDR.$fpfx.$a[$j]."$chp.fits ";}
+    if(!($bad=~/none/)){
+      $line.=$bad.".badpix";}
+    print OUT "\n$line\n";
+    $line="\tSflats -m $mapfile[$i] -b $bias[$i] $ofline[$i] "." -f";
+    for($j=0;$j<$nflat;$j++){$line.=" ccd".$a[$j];}
+    if(!($bad=~/none/)){
+      $line.=" -z ".$bad;}
+    print OUT "$line\n";}
+}
+
+#biasflat
+
+for($i=0;$i<$nspec;$i++){
+  if($offile[$i] eq "none"){
+    $line=$IMDR."$sciframe[$i]"."_b$chpb.fits: $PRDR/biasflat.json ".
+    $IMDR.$sciframe[$i]."$chp.fits ";}
+  else{
+    $line=$IMDR."$sciframe[$i]"."_f$chpb.fits: $PRDR/biasflat.json ".
+    $IMDR.$sciframe[$i]."$chp.fits ".$IMDR.$offile[$i]."_flat$chpb.fits ";}
+    if(!($bias[$i]=~/none/)){
+      addtolist($bias[$i]);
+	    $line.=$IMDR.$bias[$i]."$chp.fits";}
+    print OUT "\n$line\n";
+  if($offile[$i] eq "none"){
+    $line="\tbiasflat -b $bias[$i] $sciframe[$i]";}
+  else{
+    $line="\tbiasflat -b $bias[$i] -f $offile[$i]"."_flat $sciframe[$i]";}
+    print OUT "$line\n";}
+
+#subsky i
+
+for($i=0;$i<$nspec;$i++){
+  if($offile[$i] eq "none"){
+    $line=$IMDR."$sciframe[$i]"."_s$chpb.fits: $PRDR/subsky.json ".
+    $IMDR.$sciframe[$i]."_b$chpb.fits ".$mapfile[$i].".map ";}
+  else{
+    $line=$IMDR."$sciframe[$i]"."_s$chpb.fits: $PRDR/subsky.json ".
+    $IMDR.$sciframe[$i]."_f$chpb.fits ".$mapfile[$i].".map ";}
+  if(!($bad=~/none/)){
+    $line.=$bad.".badpix";}
+  print OUT "\n$line\n";
+  $line="\tsubsky -m $mapfile[$i] -f $sciframe[$i]";
+    if($offile[$i] eq "none"){
+      $line.="_b";}
+      else{
+        $line.="_f";}
+  if(!($bad=~/none/)){
+    $line.=" -z ".$bad;}
+  print OUT "$line\n";}
+
+#bias correct arc frames
+
+foreach(@biaslst){
+  if(!(/[^0-9]/)){$_=$fpfx.$_;}
+  $line=$IMDR.$_."_b$chpb.fits:  $IMDR$_"."$chp.fits";
+  print OUT "\n$line\n";
+  $line="\tbiasflat $_";
+  print OUT "$line\n";}
+
+
+#stitch frames
+
+if($stitch){
+
+  foreach(@stchlst){
+    if(!(/[^0-9]/)){$_=$fpfx.$_;}
+    $line=$IMDR.$_.".fits:  $IMDR$_"."c1.fits";
+    print OUT "\n$line\n";
+    $line="\tstitch $_";
+    print OUT "$line\n";}
+}
+
+
+	print "\nSpectrum reduction makefile $make created\n";
+
+# make list of files to be stitched
+
+  sub addtolist(){
+    $file=shift;
+    $match=0;
+    foreach(@stchlst){
+      if($file eq $_){
+        $match=1;
+        break;}
+    }
+    if(!$match){
+      $stchlst[$nstch]=$file;
+      $nstch++;}
+  }
+
+
+# make list of arc files to be biased
+
+sub addtobias(){
+  $file=shift;
+  $match=0;
+  foreach(@biaslst){
+    if($file eq $_){
+      $match=1;
+      break;}
+  }
+  if(!$match){
+    $biaslst[$nbias]=$file;
+    $nbias++;}
+}

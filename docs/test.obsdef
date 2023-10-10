@@ -1,0 +1,12 @@
+D_ALIGNROT      0              
+GR_ORDER        1              
+MASK            mask           
+GR_ANGLE        15             
+INSTRUMENT      IMACS          
+CAMERA          LONG           
+DEWAR           Mos3           
+MODE            SPEC           
+GRATING         IMACS_300A     
+DATE            6/2016         
+DISTORTION                     
+DEWOFF          off            

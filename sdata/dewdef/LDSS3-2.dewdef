@@ -1,0 +1,19 @@
+# Camera definition file for new LDSS3 dewar- 2 amplifier mode
+#
+#
+# number chips, chip size, Scale, mosaic size contiguous
+2 2032 4064 66.666667 4064 4064 -1
+#
+# Chip 1
+#
+0 0 0 0 1 0
+2033 -1  4065 -1
+0
+0 0
+#
+# Chip 2
+#
+0 0 0 0 0 0
+0 1 4065 -1
+0 
+0 0

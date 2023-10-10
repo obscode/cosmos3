@@ -1,0 +1,195 @@
+#!/usr/bin/python
+#
+#  MARK-SLITS marks objects in a ds9 image, using positions calculated from either
+#         an obsdef file or a map files
+#
+#  Usage: mark-slits rame [-o obsdef file | -m map file]
+
+import numpy as np
+from pyds9 import *
+import cosmos as c
+import sys
+import os
+from ctypes import *
+import string
+
+obsinfo=c.obsdata()
+libfile=os.environ['COSMOS_HOME'] + '/lib/libcosmopy.so' 
+cosmopy=cdll.LoadLibrary(libfile)
+
+#open display if not open
+display=DS9()
+wavelength=6000.
+#read parameter file
+
+parfile=c_char_p("mark-slits")
+if cosmopy.OpenCosParm(parfile) > 0:
+    c.die("Error opening parameter file")
+mark=c_char_p("                        ")
+linefile=c_char_p("                                        ")
+size=c_int()
+if cosmopy.ReadParm_s("MARK",mark)>0:
+    markv='x'
+else:
+    markv=mark.value
+if cosmopy.ReadParm_i("MARKSIZE",byref(size))>0:
+    size.value=10
+color=c_char_p("             ")
+if cosmopy.ReadParm_s("COLOR",color)>0:
+    colorv="red"
+else:
+    colorv=color.value
+msize=str(size.value)
+nlines=0
+haveline=0
+slitpos=0
+if(cosmopy.ReadParm_s("LINEFILE",linefile)) == 0:
+    haveline=1
+slip=c_char_p("                               ")
+if(cosmopy.ReadParm_s("PLOTPOS",slip)) == 0:
+    slp=slip.value
+    slp = string.lower(slp)
+    if "object" in slp:
+        slitpos=-1
+    elif "ends" in slp:
+        slitpos=1
+which=c_char_p("                        ")
+whsl=0
+if(cosmopy.ReadParm_s("WHICHSLITS",which)) == 0:
+    wch=which.value
+    wch = string.lower(wch)
+    if "partial" in wch:
+        whsl=-1
+    elif "full" in wch:
+        whsl=1
+    elif "holes" in wch:
+        whsl=2
+
+#parse command line
+args=sys.argv[1:]
+haveobs=havemap=0
+frame='1'
+narg=len(args)
+clear=0
+for i in range(narg):
+    if "-o" == args[i]:
+        obsfile=c_char_p(args[i+1])
+        haveobs=1
+    elif "-m" == args[i]:
+        obsfile=c_char_p(args[i+1])
+        havemap=1
+    elif "-l" == args[i]:
+        linefile.value=args[i+1]
+        haveline=1
+    elif "-c" == args[i]:
+        colorv=args[i+1]
+    elif "-s" == args[i]:
+        msize=args[i+1]
+    elif "-k" == args[i]:
+        markv=args[i+1]
+    elif "clear" == args[i]:
+        clear=1
+#clear display?
+if clear:
+    display.set('regions delete all')
+    sys.exit(0)
+    
+outfile=open("/tmp/ds9.reg",'w')
+if (not haveobs) and (not havemap):
+    print "Usage xymark [frame] -o obsdeffile OR -m mapfile [-l linelist OR linefile] \n"
+    sys.exit(0)
+
+#get BINNING
+
+lane=display.get('data image 1 1 2 1 yes')
+binx,biny=lane.split()
+if (binx != biny):
+    print "mark-slits does not support unequal x,y binning"
+    sys.exit(0)
+binning=c_int(int(binx))
+
+
+ #if using obsdef file get SMF file, determine number of images to expect and current wavelength
+
+if(haveobs):
+    if cosmopy.ReadObsDef(obsfile,byref(obsinfo)):
+        print "Error reading observation definition file (a) ", obsfile.value
+    mf=obsinfo.mask + '.SMF'
+    infile=open(mf,'r')
+    nimage=0
+    wavelength=6000.
+    for line in infile:
+        if 'HOLE' in line  or 'SLIT' in line:
+            nimage+=1
+        if('WAVELENGTH' in line):
+            a, wave=line.split()
+            wavelength=float(wave)
+    infile.close()
+
+#otherwise count slits in map file
+
+else:
+    mf=obsfile.value + '.map'
+    infile=open(mf,'r')
+    nimage=0
+    for line in infile:
+        if ('SLIT' in line):
+            nimage+=1
+    infile.close()
+
+#if not direct or using mapfile get linelist
+if haveobs:
+    md=obsinfo.mode
+    if 'DIRECT' in md:
+        haveline=0
+ll=c_float(0)
+lines=[float(0.)]
+if haveline:
+    lf=linefile.value
+    if lf.replace('.','',1).isdigit():
+        nlines=1
+        lines=[float(lf)]
+    else:
+        infile=open(lf,'r')
+        nlines=0
+        lines=[]
+        if not(os.path.isfile(lf)):
+            c.die("Cannot find spectral line file")
+        infile=open(lf,"r")
+        for line in infile:
+            l=line.split()
+            for x in l:
+                lines.append(float(x))
+                nlines+=1
+else:
+    nlines=1
+    lines=[wavelength]
+lltype=c_float*nlines
+ll=lltype(*lines)
+
+nimage*=nlines
+
+#calculate slit image positions
+nmarks = 2*nimage if slitpos > 0 else nimage
+arrayType=c_int*nmarks
+X=arrayType(*[1]*nmarks)
+Y=arrayType(*[1]*nmarks)
+nslit=c_int(0)
+nl=c_int(nlines)
+sltps=c_int(slitpos)
+#cosmopy.GetSlitXY8.argtypes=[c_char_p,c_int,lltype,c_int,c_int,c_int,c_ulonglong,c_ulonglong]
+whhh=c_int(whsl)
+if haveobs:
+    nslit=cosmopy.GetSlitXY8(obsfile,nl,ll,binning,sltps,whhh,X,Y)
+else:
+    nslit=cosmopy.GetMapXY8(obsfile,nl,ll,binning,sltps,whhh,X,Y)
+if nslit==0:
+    sys.exit(0)
+for i in range(nslit):
+    xx=str(X[i])
+    yy=str(Y[i])
+    lane='image; point ' + xx + ' ' + yy+ ' # point = ' + markv + ' ' +msize + ',  color=' + colorv + '\n'
+#    display.set('regions', lane)
+    outfile.write(lane)
+outfile.close()
+display.set('regions load /tmp/ds9.reg')

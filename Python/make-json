@@ -1,0 +1,57 @@
+#!/usr/bin/python
+import string
+import sys
+
+fil = sys.argv[1]
+file = "/home/cosuser/Cospar/" + fil
+jfile = file + ".json"
+jsonf = open(jfile,'w')
+pfile = file + ".par"
+parf = open(pfile,'r')
+file = "/home/cosuser/Cosmos/Cosmos3/sdata/schema/" + fil
+sfile = file + ".schema"
+schf = open(sfile,'w')
+jsonf.write('{\n')
+schf.write('{\n\"$schema\":\t\"http://json-schema.org/schema#\",\n')
+line = '\"title\":\t\"' + fil + ' schema\",\n'
+schf.write(line)
+schf.write('\"type\":\t\t\"object\",\n')
+schf.write('\"properties\":\t{\n')
+first=1
+for line in parf:
+    those=line.split(',')
+    if those[0]=='mode':
+        break
+    name='"' + those[0].upper() + '":  '
+    type=those[1]
+    value=those[3]
+    desc=those[6].rstrip()
+    if type=='r':
+        ovalue=value
+        tvalue='\"number\",\n'
+    elif type=='i':
+        ovalue=value
+        tvalue='\"integer\",\n'
+    elif type=='s':
+        ovalue= value
+        tvalue='\"string\",\n'
+    elif type=='b':
+        tvalue='\"boolean\",\n'
+        if value=='y':
+            ovalue='true'
+        else:
+            ovalue='false'
+    if not first:
+        jsonf.write(',\n')
+        schf.write(',\n')
+    first=0
+    line = name + ovalue
+    jsonf.write(line)
+    line = '\t' + name + '{\n'
+    schf.write(line)
+    line='\t\t\"type\":  ' + tvalue
+    schf.write(line)
+    line='\t\t\"description\":  ' + desc + '}'
+    schf.write(line)
+jsonf.write('\n}\n')
+schf.write('\n\t}\n}\n')

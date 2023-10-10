@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+#script to call the viewspectra program using COSMOS3 version of Perl if exists
+
+if [ -d $COSMOS_HOME/Perl/perl-5.26.2 ]; then
+
+PATH="$COSMOS_HOME/Perl/perl-5.26.2/bin:$PATH"
+export PATH
+
+if [ -n "$PERL5LIB"]; then
+PERL5LIB="$COSMOS_HOME/Perl/perl-5.26.2/lib/site_perl/5.26.2/darwin-2level:$COSMOS_HOME/Perl/perl-5.26.2/lib/site_perl/5.26.2:$COSMOS_HOME/Perl/perl-5.26.2/lib/5.26.2/darwin-2level:$COSMOS_HOME/Perl/perl-5.26.2/lib/5.26.2:$COSMOS_HOME/Perl/perl-5.26.2/lib:$PERL5LIB"
+else
+PERL5LIB="$COSMOS_HOME/Perl/perl-5.26.2/lib/site_perl/5.26.2/darwin-2level:$COSMOS_HOME/Perl/perl-5.26.2/lib/site_perl/5.26.2:$COSMOS_HOME/Perl/perl-5.26.2/lib/5.26.2/darwin-2level:$COSMOS_HOME/Perl/perl-5.26.2/lib/5.26.2:$COSMOS_HOME/Perl/perl-5.26.2/lib"
+fi
+export PERL5LIB
+
+fi
+
+vss

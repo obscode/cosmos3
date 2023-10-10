@@ -1,0 +1,44 @@
+<html>
+<head>
+  <title>apertures</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>apertures</h1>
+<p>
+<b>apertures</b> uses the information in an observation definition file to calculate
+the expected locations, on each chip, of apertures. as well as their location
+on an 8-chip mosaic. Output is a file containing coordinate information and
+aperture type.
+</p>
+<br>
+
+<p>
+<table width=100%>
+<tr><td width="150px">USAGE<td><code>apertures <i>-o observset  -b binning</i></code>
+<tr><td valign="top">INPUT<td>
+  <table width=100%>
+  <tr><td><code>observset.obsdef</code> is the applicable observation definition file
+  <tr><td><code>binning</code> is the binning of the CCD data
+  </table>
+<tr><td>OUTPUT<td><code>observset.xy</code> aperture data file
+<tr><td>PARAMETERS<td>none
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+Each line of the output file has the following format:
+<pre>
+X(mosaic)   Y(mosaic)   Object #     ObjectName   Chip      X(ccd)     Y(ccd)  Type  
+</pre>
+</p>
+<br>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>

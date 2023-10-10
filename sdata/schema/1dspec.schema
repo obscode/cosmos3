@@ -1,0 +1,25 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"1dspec schema",
+"type":		"object",
+"properties":	{
+	"optimal":  {
+		"type":  "boolean",
+		"description":  "do optimal extraction"},
+	"align":  {
+		"type":  "boolean",
+		"description":  "find slit position of spectrum peak?"},
+	"clean":  {
+		"type":  "boolean",
+		"description":  "clean cosmic rays?"},
+	"edge":  {
+		"type":  "integer",
+		"description":  "excluded edge of spectrum"},
+	"hwidth":  {
+		"type":  "integer",
+		"description":  "half width of 1-d extraction window"},
+	"gain":  {
+		"type":  "number",
+		"description":  "gain e-/hdu"}
+	}
+}

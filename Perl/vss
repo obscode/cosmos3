@@ -1,0 +1,1873 @@
+#!/usr/bin/env perl
+#
+# VIEWSPECTRA displays and analyses single or stacks of 1d or 2d spectra
+#
+#  USAGE:  viewspectra
+#
+#  DATE:   16 Oct 2018
+
+use PDL;
+use PDL::AutoLoader;
+use PDL::IO::Misc;
+use PDL::ImageND;
+use PGPLOT;
+use PDL::Fit::Gaussian;
+use PDL::NiceSlice;
+use Tk;
+use Astro::FITS::CFITSIO;
+use Config;
+if ($Config{osname}=~/linux/) {use lib "/usr/local/lib/perl";}
+
+########################### default parameters ################################
+
+$exwin=0;
+$prec=4;
+$com=shift;
+if($com=~/[Ww]/){
+  $wrt=1;}
+else{
+  $wrt=0;}
+if($com=~/[Pp]/){
+  $prec=$com;
+  $prec=~s/[wW]+[Pp](.)/\1/;}
+@tran=(0,1,0,0,1,0);
+$pfile="viewspectra";
+%param=r_cosparam($pfile);
+if(!exists($param{SMOOTH})){die("Parameter file error");}
+$smth=$param{SMOOTH}+0;
+$dlambda=0;
+if(!exists($param{HLFWDTH})){die("Parameter file error");}
+$hlfwd=$param{HLFWDTH};
+if(!exists($param{NOD})){$ndd=0;}
+else{
+  $ndd=$param{NOD}+0;}
+if(!exists($param{LAMINT})){die("Parameter file error");}
+$lamint=$param{LAMINT};
+if(!exists($param{LAMBDA0})){
+  $lmin=0;}
+else{
+  $lmin=$param{LAMBDA0}+0.;}
+if(!exists($param{LAMBDA1})){
+  $lmax=100000;}
+  else{
+  $lmax=$param{LAMBDA1}+0.;}
+$fracv=0.1;
+$fracs=0.01;
+$midv=0.;
+$nullarray=$anynull=undef;
+$show[0]=$show[1]=$show[2]=1;
+$zoomm=0;
+$logfile="";
+$LOG=$DRED=0;
+$autoscl=1;
+
+$plotwidth=680;
+$plotheight=420;
+$specheight=64;
+$ewidth=590,
+$eheight=460,
+
+$lmn=0;
+$lmx=100000;
+$fitsfile=$ENV{'COSMOS_HOME'}."/bin/template.fits";
+$rff=0;
+$printfile=$ENV{'HOME'}."/plot.ps";
+
+# galaxy line list
+
+if(!exists($param{LINELIST})){die("Parameter file error");}
+$lfile=$param{LINELIST};
+if($lfile=~/\$HOME/){
+    $lfile=~s/\$HOME//;
+    $lfile=$ENV{'HOME'}.$lfile;}
+
+chop($filename=`pwd`);
+$filename.='/';
+
+############################### main window ###################################
+
+$mw=MainWindow->new;
+$mw->title('ViewSpectra');
+$mw->configure(-background=>'AntiqueWhite3');
+$action=1;
+$myfont=$mw->fontCreate(
+			-family => 'helvetica',
+			-weight => 'bold',
+			-size   => 11);
+$bigfont=$mw->fontCreate(
+			-family => 'helvetica',
+			-weight => 'bold',
+			-size   => 14);
+
+$mw->Tk::bind("<Button-3>",\&set_contr);
+
+$mw->Tk::bind("<Key-1>",\&set_small_win);
+$mw->Tk::bind("<Key-2>",\&set_large_win);
+$mw->Tk::bind("<Key-q>", sub{exit});
+
+# menu bar
+
+$bar=$mw->Frame(
+		-background=>'AntiqueWhite3',
+		-relief=>ridge,
+		-borderwidth=>2)->pack(
+				       -side=>'top',
+				       -expand=>1,
+				       -fill=>'x');
+$fileMenu=$bar->Menubutton(
+			   -background=>'AntiqueWhite3',
+			   -text=>'File',
+			   -font=>$myfont,
+			   -menuitems=>[['command'=>'Open',
+					 -font=>$myfont,
+					 -command=>\&open_file],
+					['command'=> 'Exit',
+					 -font=>$myfont,
+					 -command=> sub{exit}]])->pack(
+								 -side=>'left',
+								 -anchor=>'n');
+$editMenu=$bar->Menubutton(
+			   -background=>'AntiqueWhite3',
+			   -text=>'Edit',
+			   -font=>$myfont,
+			   -menuitems=> [['command'=>'Preferences',
+					  -font=>$myfont,
+					  -command=>\&set_pref]])->pack(
+				       			        -side=>'left',
+								-anchor=>'n');
+# plot frame
+
+$pltframe=$mw->Frame( 
+                     -borderwidth=>10,
+		     -background=>'AntiqueWhite3',
+		     -relief=>'groove')->pack(-padx=>30,-pady=>10);
+
+$picframe=$pltframe->Frame(
+		     -borderwidth=>2,
+		     -background=>'AntiqueWhite3',
+		     -relief=>'groove')->pack(-padx=>3,-pady=>3);
+$plot=$picframe->Canvas(
+			-width=>$plotwidth,
+			-height=>$plotheight,
+#			-width=>680,
+#			-height=>544,
+			-background=>'white',
+			-cursor=>'crosshair')->pack;
+$plot->Tk::bind("<Button-1>",[\&get_coord,Ev('x'),Ev('y')]);
+
+#spectrum image frame
+
+$specframe=$pltframe->Frame(
+		     -borderwidth=>2,
+		     -background=>'AntiqueWhite3',
+		     -relief=>'groove')->pack(-padx=>3,-pady=>3);
+$splot=$specframe->Canvas(
+			  -width=>$plotwidth,
+			  -height=>$specheight,
+			-background=>'white',
+			-cursor=>'crosshair')->pack;
+
+$splot->Tk::bind("<Button-1>",[\&set_cline,Ev('x'),Ev('y')]);
+
+
+# buttons
+
+$bf2=$mw->Frame(-background=>'AntiqueWhite3')->pack(
+					     -pady=>1,-side=>bottom);
+
+$lamframe=$bf2->Frame(
+		     -background=>'AntiqueWhite3',
+#		     -relief=>'groove',
+		     -borderwidth=>2)->pack(
+			     -pady=>5,-padx=>5,-side=>left);
+
+$lamframe->Label(
+		 -background=>'AntiqueWhite3',
+		 -font=>$myfont,
+		 -text=>'Lambda:')->pack(
+					   -pady=>1,-padx=>10,-side=>left);
+$lambda='0000.00';
+$Coord=$lamframe->Label(
+			-background=>'AntiqueWhite3',
+			-textvariable=>\$lambda,
+			-font=>$myfont,
+			-width=>8,
+			-relief=>'sunken')->pack(
+					       -pady=>1,-side=>left);
+
+$l0frame=$bf2->Frame(
+		    -background=>'AntiqueWhite3',
+#		    -relief=>'groove',
+		     -borderwidth=>2)->pack(
+					    -pady=>5,-padx=>10,-side=>left);
+
+$l0frame->Label(
+		-background=>'AntiqueWhite3',
+		-font=>$myfont,
+		-text=>'Rest Lambda:')->pack(
+					   -pady=>1,-padx=>10,-side=>left);
+$lam0='0000.00';
+$Lam0=$l0frame->Entry(
+		      -background=>'AntiqueWhite3',
+		      -font=>$myfont,
+		      -textvariable=>\$lam0,
+		      -width=>8,
+		      -relief=>'sunken')->pack(
+					       -pady=>1,-side=>left);
+$Lam0->icursor('end');
+$Lam0->Tk::bind("<Return>",[\&calcz]);
+
+$zframe=$bf2->Frame(
+		   -background=>'AntiqueWhite3',
+#		     -relief=>'groove',
+		     -borderwidth=>2)->pack(
+					    -pady=>5,-padx=>10,-side=>left);
+
+$zframe->Label(
+	       -background=>'AntiqueWhite3',
+	       -font=>$myfont,
+   	       -text=>'z:')->pack(
+				    -pady=>1,-padx=>10,-side=>left);
+$zed='0.';
+for($i=0;$i<$prec;$i++){
+  $zed.='0';}
+$nplcs=$prec+2;
+  
+$Zed=$zframe->Entry(
+		    -background=>'AntiqueWhite3',
+		    -font=>$myfont,
+		    -textvariable=>\$zed,
+		    -width=>$nplcs,
+		    -relief=>'sunken')->pack(
+					     -padx=>10,-pady=>1,-side=>left);
+$Zed->Tk::bind("<Return>",[\&try]);
+
+$tryf=$bf2->Frame(
+		  -background=>'AntiqueWhite3',
+		  -borderwidth=>2,
+		  -relief=>"sunken")->pack(
+					 -pady=>10,-padx=>10,-side=>left);
+$TryButton=$tryf->Button(
+		       -background=>'AntiqueWhite3',
+		       -text=>'Try',
+		       -font=>$myfont,
+		       -command=>\&try)->pack(
+					      -padx=>10,-pady=>1,-side=>left);
+$lbtframe=$tryf->Frame(
+		   -background=>'AntiqueWhite3',
+		     -borderwidth=>2)->pack(-side=>left);
+$lb0frame=$lbtframe->Frame(
+			   -background=>'AntiqueWhite3')->pack(-side=>left);
+$lb0but=$lb0frame->Checkbutton(
+			       -background=>'AntiqueWhite3',
+			       -highlightthickness=>0,
+			       -padx=>0,-pady=>0,
+			       -variable=>\$show[0])->pack(-side=>bottom);
+$lb0frame->Label(
+		 -background=>'AntiqueWhite3',
+		 -text=>'0',
+		 -padx=>0,-pady=>0,
+		 -font=>$myfont,)->pack(-side=>bottom);
+$lb1frame=$lbtframe->Frame(
+			   -background=>'AntiqueWhite3')->pack(-side=>left);
+$lb1but=$lb1frame->Checkbutton(
+			       -background=>'AntiqueWhite3',
+			       -highlightthickness=>0,
+			       -padx=>0,-pady=>0,
+			       -variable=>\$show[1])->pack(-side=>bottom);
+$lb1frame->Label(
+		 -background=>'AntiqueWhite3',
+		 -text=>'1',
+		 -padx=>0,-pady=>0,
+		 -font=>$myfont,)->pack(-side=>bottom);
+$lb2frame=$lbtframe->Frame(
+			   -background=>'AntiqueWhite3')->pack(-side=>left);
+$lb2but=$lb2frame->Checkbutton(
+			       -background=>'AntiqueWhite3',
+			       -highlightthickness=>0,
+			       -padx=>0,-pady=>0,
+			       -variable=>\$show[2])->pack(-side=>bottom);
+$lb2frame->Label(
+		 -background=>'AntiqueWhite3',
+		 -text=>'2',
+		 -padx=>0,-pady=>0,
+		 -font=>$myfont,)->pack(-side=>bottom);
+
+
+
+
+$bf=$mw->Frame(-background=>'AntiqueWhite3')->pack(
+					    -pady=>5,-side=>bottom);
+
+$Zframe=$bf->Frame(
+                   -background=>'AntiqueWhite3',
+                   -borderwidth=>2,
+                   -relief=>"sunken")->pack(
+                                          -pady=>0,-padx=>5,-side=>left);
+
+$ZoomButton=$Zframe->Button(
+			-background=>'AntiqueWhite3',
+			-text=>'Zoom',
+			-font=>$myfont,
+	      	-command=>\&zoom)->pack(
+					-pady=>1,-padx=>1,-side=>left);
+
+$ZoomUpButton=$Zframe->Button(
+      -background=>'AntiqueWhite3',
+      -text=>'X2',
+      -font=>$myfont,
+      -command=>\&zoomup)->pack(
+                              -pady=>1,-padx=>0,-side=>left);
+$ZoomDownButton=$Zframe->Button(
+                        -background=>'AntiqueWhite3',
+                        -text=>'/2',
+                        -font=>$myfont,
+                        -command=>\&zoomdown)->pack(
+                                -pady=>1,-padx=>0,-side=>left);
+
+$UnzoomButton=$bf->Button(
+    			  -background=>'AntiqueWhite3',
+			  -text=>'Unzoom',
+			  -font=>$myfont,
+			  -command=>\&unzoom)->pack(
+					      -pady=>5,-padx=>10,-side=>left);
+$PrintButton=$bf->Button(
+			 -background=>'AntiqueWhite3',
+			 -text=>'Print',
+			 -font=>$myfont,
+			 -command=>\&print_spec)->pack(
+					      -pady=>5,-padx=>10,-side=>left);
+$ExamButton=$bf->Button(
+			 -background=>'AntiqueWhite3',
+			 -text=>'Examine',
+			 -font=>$myfont,
+			 -command=>\&examn)->pack(
+					      -pady=>5,-padx=>10,-side=>left);
+
+
+if($wrt){
+    $WriteButton=$bf->Button(
+			     -background=>'AntiqueWhite3',
+			     -text=>'Write',
+			     -font=>$myfont,
+			     -command=>\&write_spec)->pack(
+		    			     -pady=>5,-padx=>10,-side=>left);}
+
+#$CCorButton=$bf->Button(
+#            -background=>'AntiqueWhite3',
+#            -text=>'CCor',
+#            -font=>$myfont,
+#            -command=>\&ccor)->pack(
+#                    -pady=>5,-padx=>10,-side=>left);
+
+
+$FBFrame=$bf->Frame()->pack(
+
+			     -pady=>5,-padx=>10,-side=>left);
+
+$PrevButton=$bf->Button(
+			-background=>'AntiqueWhite3',
+			-text=>'<',
+			-font=>$myfont,
+			-command=>\&prevspec)->pack(-side=>left);
+      
+$NextButton=$bf->Button(
+			-background=>'AntiqueWhite3',
+			-text=>'>',
+			-font=>$myfont,
+			-command=>\&nextspec)->pack(-side=>left);
+
+$gotoframe=$bf->Frame(
+		     -background=>'AntiqueWhite3',
+#		     -relief=>'groove',
+		     -borderwidth=>2)->pack(
+			     -pady=>5,-padx=>10,-side=>left);
+
+$gotoframe->Label(
+		 -background=>'AntiqueWhite3',
+		 -text=>'goto:',
+		  -font=>$myfont,)->pack(
+					 -pady=>1,-padx=>10,-side=>left);
+$Goto=$gotoframe->Entry(
+			-background=>'AntiqueWhite3',
+			-textvariable=>\$nobj,
+			-font=>$myfont,
+			-width=>4,
+			-relief=>'sunken')->pack(
+					       -pady=>1,-side=>left);
+
+$Goto->icursor('end');
+$Goto->Tk::bind("<Return>",[\&newobj]);
+
+if($llist){readlinf($lfile);}
+
+MainLoop;
+
+# get spectrum
+
+sub get_spec{
+
+  if($zoom){unzoom();}
+  if($nodstat){$nod=$ndd;}
+  $status=0;
+  $fptr->movabs_hdu($nobj,undef,$status);
+  if($status){
+    errmess("cannot find spectrum $nobj");
+    return 1;}
+  @$naxes=0;
+  $fptr->get_img_parm($bitpix,$naxis,$naxes,$status);
+  if($status){
+    errmess("Error reading spectrum $nobj parameters");
+    return 1;}
+  $size=$wid=$npln=$errpln=0;
+  ($size,$wid,$npln)=@$naxes;
+  $tsize=$size;
+  if($npln != 2) {$npln=1;}
+  if($wid){$tsize*=$wid*$npln;}
+  $one=1;
+  $fptr->read_img(Astro::FITS::CFITSIO::TFLOAT(),$one,$tsize,
+                  $nullarray,\@array,$anynull,$status);
+  if($status){
+    errmess("Error reading spectrum $nobj image $status");
+    return 1;}
+  if($naxis>1){
+    $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"CNTRLINE",$midpt,undef,
+                    $status);
+    $midpt-=1;#zero base
+    if($status){
+        $wid=1;
+        $errpln=1;}
+    else{
+      if($naxis==3){
+        $errpln=1;}
+      }
+    }
+  $fptr->read_key(Astro::FITS::CFITSIO::TINT(),"SLITLEN",$sltlen,undef,
+                    $status);
+  if($status){
+    $sltlen=$wid;
+    $status=0;}
+  $fptr->read_key(Astro::FITS::CFITSIO::TSTRING(),"OBJECT",$objname,undef,
+                  $status);
+  $status=0;
+  $fptr->read_key(Astro::FITS::CFITSIO::TINT(),"SLITNUM",$slitnum,undef,
+                  $status);
+  $status=0;
+  $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"CRVAL1",$l0,undef,
+                  $status);
+  $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"CDELT1",$dl,undef,
+                  $status);
+  if(!$status){
+    $lambda0=$l0;
+    $dlambda=$dl;
+    $smooth=int $smth/$dlambda;
+    $smooth=1 if ($smooth<1);
+    $lscale=$dlambda*sequence($size)+$lambda0;
+    @xval=list $lscale;
+    $lambda1=$lambda0+($size-1)*$dlambda;
+    $lamin = ($lambda0>$lmin) ? $lambda0 : $lmin;
+    $lamax = ($lambda1<$lmax) ? $lambda1 : $lmax;
+    $xmin = ($lamin>$lmm) ? $lamin: $lmm;
+    $xmax = ($lamax<$lmx) ? $lamax: $lmx;}
+  $status=0;
+  $probj=$nobj;
+  
+  $AOBJ=pdl @array;
+  $sz=$size-1;
+  $epln=$errpln+1;
+  reshape $AOBJ,$size,$wid,$epln;
+  $AOBJ0=$AOBJ(,,(0));
+  $wd=$wid-1;
+  if($errpln){
+    $AOBJ1=$AOBJ(,,(1));
+    ($AOBJ1->where($AOBJ1<0)).=0;}
+  else{
+    $AOBJ1=ones($size,$wid);}
+  $GOOD=zeroes($size,$wid);
+  ($GOOD->where($AOBJ1>0)).=1;
+  $LOBJ=$AOBJ0->where($AOBJ0!=0.);
+  $TOBJ=qsort($LOBJ);
+  $i=int($fracv*nelem($TOBJ));
+  if(!$autoscl){
+    $hival=$val0;}
+  else{
+    $hival=at($TOBJ,$i);}
+  $i=int((1.-$fracv)*nelem($TOBJ));
+  if(!$autoscl){
+    $lowval=$val1;}
+  else{
+    $lowval=at($TOBJ,$i);}
+  if($LOG){print OUT "OBJECT $objname\n";}
+}
+
+# plot spectrum
+
+sub plot_spec{
+  if($wid>1){
+    if(!$nod){
+      $lin0=$midpt-$hlfwd;
+      if($lin0<0){$lin0=0;}
+      $lin1=$midpt+$hlfwd;
+      if($lin1>=$wid){$lin1=$wd;}
+      $LOBJ=$AOBJ0->slice(":,$lin0:$lin1");
+      $GOBJ=$GOOD->slice(":,$lin0:$lin1");
+      $AAJJ=$AOBJ1->slice(":,$lin0:$lin1");}
+    if($nod){
+      $lin0=$midpt-$hlfwd;
+	    $ln0=$lin0+$nod;
+      $lin1=$midpt+$hlfwd;
+	    $ln1=$lin1+$nod;
+      if($lin0<0){
+        $ln0+=-$lin0;
+        $lin0=0;}
+      if($ln0<0){
+        $lin0+=-$ln0;
+        $ln0=0;}
+      if($lin1>=$wid){
+        $ln1-=$lin1-$wid+1;
+        $lin1=$wid-1;}
+      if($ln1>=$wid){
+        $lin1-=$ln1-$wid+1;
+        $ln1=$wid-1;}
+	    $LOBJ=$AOBJ0(,$lin0:$lin1)-$AOBJ0(,$ln0:$ln1);
+      $GJJ=$GOOD(,$ln0:$ln1);
+      $GOBJ=$GOOD(,$lin0:$lin1)*$GJJ;
+      $AAJJ=$AOBJ1(,$lin0:$lin1)*$AOBJ1(,$ln0:$ln1);}
+    $nlin=$lin1-$lin0+1;
+    $TOBJA=($LOBJ*$GOBJ)->xchg(0,1);
+    $TOBJ0 = sumover($TOBJA);
+    $GOBJ0=sumover $GOBJ->xchg(0,1);}
+  else{
+    $nlin=1;
+    $TOBJB=$AOBJ0*$GOOD;
+    $TOBJ0=$TOBJB(:,(0));
+    $GOBJ0=$GOOD(:,(0));
+    $AAJJ=$AOBJ1(:,(0));}
+  ($GOBJ0->where($GOBJ0==0)).=-1;
+  $TOBJ0=$nlin*$TOBJ0/$GOBJ0;
+  ($TOBJ0->where($GOBJ0<0)).=0.;
+  $TOBJ=$TOBJ0;
+  $GOBJ2=$AAJJ*$AAJJ;
+  if($wid>1){
+    $GOBJD=sumover $GOBJ2->xchg(0,1);}
+  else{
+    $GOBJD=$GOBJ2;}
+  $GOBJR=$nlin*sqrt($GOBJD)/$GOBJ0;
+  ($GOBJR->where($GOBJ0<0)).=0;
+  if($errpln){
+    $FOBJ=float cat $TOBJ0,$GOBJR;}
+  else{
+    $FOBJ=float $TOBJ0;}
+  $ntobj=nelem($FOBJ);
+  $LOBJ=(convolve $TOBJ0,ones($smooth))/$smooth;
+  $TOBJ=qsort($LOBJ);
+  $i=int($fracs*nelem($TOBJ));
+  $min=at($TOBJ,$i);
+  $i=int((1.-$fracs)*nelem($TOBJ));
+  $max=at($TOBJ,$i);
+  if($min<-$max){
+    $min=-$max;}
+  $d=0.1*($max-$min);
+  $min-=$d;
+  $max+=$d;
+  if(!$zoom){
+    $ymin=$min;
+    $ymax=$max;}
+  $l0=int(($lamin-$lambda0)/$dlambda);
+  $l0=($l0>0) ? $l0 : 0;
+  $l1=int(($lamax-$lambda0)/$dlambda);
+  $l1=($l1<=$size-1) ? $l1 : $size-1;
+  $lsize=$l1-$l0+1;
+  $xmm=int(($xmin-$lambda0)/$dlambda)+1;
+  $xmm=1 if ($xmm<1);
+  $xmx=int(($xmax-$lambda0)/$dlambda)-1;
+  $xmx=$size if($xmx>$size);
+  @yval=list $LOBJ;
+  pgbegin(0,"/gif",1,1);
+  pgpage; 
+  pgpap(8.0,0.75);
+  pgsch(1);
+  pgscr(0,1,1,1);
+  pgscr(1,0,0,0);
+  pgask(0);
+  if($ymin==$ymax){
+    pgsch(2);
+    pgenv(0.,1.,0.,1.,0,-2);
+    pgtext(0.4,0.5,"NO DATA");
+    pgsch(1);}
+  else{
+    pgenv($xmin,$xmax,$ymin,$ymax,0,0);
+    $flspc=$filename;
+    $flspc=~s/([^\/]*\/)*//;
+    $flspc=~s/\.2spec//;
+    pglabel('Lambda','Flux',"File $flspc  Slit# $slitnum  Object $objname");
+    $printfile= $objname . '.ps';
+    pgmtext(B,3.5,0.,0.,$objname);
+    pgsch(3);
+    pgline($size,\@xval,\@yval);}
+  pgend;
+  $graph=$plot->Photo(
+                    -file=>"pgplot.gif");
+  $plot->createImage($plotwidth/2,$plotheight/2,-image=>$graph);
+  if($wid>1){
+    spimage();}
+else{
+      sclear();}
+    }
+
+
+sub spimage{
+
+    pgbegin(0,"/gif",1,1);
+    pgpap(6.84,0.1);
+    for($i=16;$i<=255;$i++){
+	$val=1.0*($i-16.0)/239;
+	pgscr($i,$val,$val,$val);}
+    pgscir(16,255);
+    pgsch(0);
+    pgenv($xmm,$xmx,1,$wid,0,0);
+    $lvl=$lowval*$nlin;
+    $hvl=$hival*$nlin;
+   pgimag(\@array,$size,$wid,$xmm,$xmx,1,$wid,$lvl,$hvl,[0,1,0,0,0,1]);
+   pgsci(2);
+   $xdf=0.02*($xmx-$xmm);
+   @xx=($xmm,$xmm+$xdf,$xmm+$xdf,$xmm);
+   @xx1=($xmx,$xmx-$xdf,$xmx-$xdf,$xmx);
+   @yy=($midpt+1-$hlfwd,$midpt+1-$hlfwd,$midpt+1+$hlfwd,$midpt+1+$hlfwd);
+   @yy1=($midpt+1-$hlfwd+$nod,$midpt+1-$hlfwd+$nod,$midpt+1+$hlfwd+$nod,
+          $midpt+1+$hlfwd+$nod);
+   pgline(4,\@xx,\@yy);
+   pgline(4,\@xx1,\@yy);
+   if($nod){
+     pgline(4,\@xx,\@yy1);
+     pgline(4,\@xx1,\@yy1);} 
+   pgsci(1);
+    pgend;
+    $sgraph=$splot->Photo(
+		      -file=>"pgplot.gif");
+    $sid=$splot->createImage($plotwidth/2,$specheight/2,-image=>$sgraph);
+   }
+
+sub sclear{
+  $splot->delete($sid);}
+
+# print spectrum
+
+sub print_spec{
+
+    pgbegin(0,"$printfile/PS",1,1);
+    pgpage;     pgsch(1);
+    pgscr(0,1,1,1);
+    pgscr(1,0,0,0);
+    pgask(0);
+    pgenv($xmin,$xmax,$ymin,$ymax,0,0);
+    pglabel('Lambda','Flux',"File $file Object $nobj");
+    pgsch(3);
+    pgline($size,\@xval,\@yval);
+    pgend;
+    system("lpr $printfile");}
+
+# unzoom
+
+sub unzoom{
+    $xmin = ($lamin>$lmm) ? $lamin: $lmm;
+    $xmax = ($lamax<$lmx) ? $lamax: $lmx;
+    $ymin=$min;
+    $ymax=$max;
+    $zoom=0;
+    clearplt();
+    plot_spec();}
+
+# zoom up
+
+sub zoomup{
+  $zoom=1;
+  $ymin/=2;
+  $ymax/=2;
+  clearplt();
+  plot_spec();}
+
+# zoom down
+
+sub zoomdown{
+  $zoom=1;
+  $ymin*=2;
+  $ymax*=2;
+  clearplt();
+  plot_spec();}  
+
+# zoom
+
+sub zoom{
+
+    $ltemp=$lambda;
+    $zoomm=1;
+    $plot->configure(-cursor=>'sizing');
+    $x=undef;
+    $plot->waitVariable(\$x);
+    $xorg=$x;    $yorg=$y;
+    $xxorg=$xx;
+    $yyorg=$yy;
+    $plot->Tk::bind("<Button-1>");
+    $plot->Tk::bind("<Button1-Motion>",[\&draw_box,Ev('x'),Ev('y')]);
+    $plot->Tk::bind("<ButtonRelease-1>",[\&done_box]);
+    $xend=undef;
+    $plot->waitVariable(\$xend);
+    $plot->Tk::bind("<Button-1>",[\&get_coord,Ev('x'),Ev('y')]);
+    $plot->configure(-cursor=>'crosshair');
+    $xmin=$xorg if($xorg>$xmin);
+    $xmax=$xend if($xmax>$xend);
+    $ymin=$yorg if($ymin<$yorg);
+    $ymax=$yend if($ymax>$yend);
+    $zoom=1;
+    $zoomm=0;
+    $lambda=$ltemp;
+    clearplt();
+   plot_spec();}
+
+sub get_coord{
+
+    $a=shift;
+    $xx=shift;
+    $yy=shift;
+    $xx=$plot->canvasx($xx);
+    $x=$xmin+($xmax-$xmin)*($xx-52)/576.;
+    $lambda=$x;
+    $lambda=~s/\.([0-9][0-9])[0-9]+/\.\1/;
+    $yy=$plot->canvasy($yy);
+    $y=$ymin+($ymax-$ymin)*(475-$yy)/406.;
+    if(!$zoomm){calcz();}
+}
+    
+sub set_cline{
+
+    $a=shift;
+    $xx=shift;
+    $yy=shift;
+    $yy=$plot->canvasy($yy);
+    $midpt=int($wid*(59-$yy)/56.);
+    plot_spec();}
+
+
+sub draw_box{
+    
+    $a=shift;
+    $xx=shift;
+    $yy=shift;
+    $xx=$plot->canvasx($xx);
+    $x=$xmin+($xmax-$xmin)*($xx-52)/576.;
+    $yy=$plot->canvasy($yy);
+    $y=$ymin+($ymax-$ymin)*(475-$yy)/406.;
+    $plot->delete("line");
+    $plot->createLine($xxorg,$yyorg,$xxorg,$yy,$xx,$yy,$xx,$yyorg,$xxorg,$yyorg,-fill=>'red',-tags=>"line");}
+
+sub done_box{
+
+    $yend=$y;
+    $xend=$x;}
+
+sub calcz{
+    if($lam0>0){
+	$z=$lambda/$lam0-1;
+	$zed=$z;
+  if($prec==3){$zed=~s/\.([0-9][0-9][0-9])[0-9]+/\.\1/;}
+  if($prec==4){$zed=~s/\.([0-9][0-9][0-9][0-9])[0-9]+/\.\1/;}
+  if($prec==5){$zed=~s/\.([0-9][0-9][0-9][0-9][0-9])[0-9]+/\.\1/;}
+  if($prec==6){$zed=~s/\.([0-9][0-9][0-9][0-9][0-9][0-9])[0-9]+/\.\1/;}
+    }
+}
+sub calcl0{
+
+    $l0=$lambda/(1.+$zed);
+    $lam0=~s/([0-9]*\.[0-9])[0-9]+/\1/;}
+
+sub prevspec{
+
+    if($nobj>1){
+	$probj=$nobj;
+	$nobj--;
+	clearplt();
+	get_spec();
+	plot_spec();}
+    }
+
+sub nextspec{
+
+    if($nobj<$nspec){
+	$probj=nobj;
+	$nobj++;
+	clearplt();
+	get_spec();
+	plot_spec();}
+  else{
+    errmess("Spectrum $nobj does not exist");}
+    }
+
+sub newobj{
+    if($nobj<$nspec){
+	clearplt();
+	get_spec();
+	plot_spec();}
+}
+
+sub try{
+    $plot->delete("slines");
+    for($i=0;$i<$nlines;$i++){
+	$ll=(1.+$zed)*$lines[$i];
+	next if($ll<=$xmin || $ll>=$xmax);
+	$xxx=52+576*($ll-$xmin)/($xmax-$xmin);
+	if($type[$i] eq '2' && $show[2]){
+	    $plot->createText($xxx,63,-text => $label[$i]);
+	    $plot->createLine($xxx,68,$xxx,475,-fill=>'red',-tags=>"slines");}
+	else{
+	    if($type[$i] eq '1' && $show[1]){
+		$plot->createText($xxx,63,-text => $label[$i]);
+		$plot->createLine($xxx,68,$xxx,475,-fill=>green,-tags=>
+                       "slines");}
+	    else{
+		if($type[$i] eq '0' && $show[0]){
+		    $plot->createText($xxx,63,-text => $label[$i]);
+		    $plot->createLine($xxx,68,$xxx,475,-fill=>BLUE,-tags=>"
+                           slines");}
+	        }
+	    }   
+        }
+    }
+
+sub clearplt{
+#    $graph->destroy;
+#    $sgraph->destroy;
+    $plot->delete("all");
+    $plot->destroy;
+    $plot=$picframe->Canvas(
+			    -width=>$plotwidth,
+			    -height=>$plotheight,
+			    -background=>'white',
+			    -cursor=>'crosshair')->pack;
+    $plot->Tk::bind("<Button-1>",[\&get_coord,Ev('x'),Ev('y')]);
+    $splot->destroy;
+    $splot=$specframe->Canvas(
+			      -width=>$plotwidth,
+			      -height=>$specheight,
+			      -background=>'white',
+			      -cursor=>'crosshair')->pack;
+    $splot->Tk::bind("<Button-1>",[\&set_cline,Ev('x'),Ev('y')]);}
+
+########################### Open file window ##################################
+
+sub open_file{
+   
+    $open=$mw->Toplevel;
+    $open->title('');
+    $open->configure(-background=>'AntiqueWhite3');
+    $open->Label(
+		 -text=>"Open file",
+		 -background=>'AntiqueWhite3')->pack;
+    $filenet=$open->Entry(
+			  -background=>'AntiqueWhite3',
+			  -font=>$myfont,
+			  -textvariable=>\$filename,
+			  -takefocus=>1,
+			  -width=>60)->pack(
+					    -padx=>10,
+					    -pady=>10);
+    $filenet->focus;
+    $filenet->icursor('end');
+    $filenet->Tk::bind("<Return>",[\&openf]);
+    $open->Button(
+		  -text=>'Open',
+		  -font=>$myfont,
+		  -background=>'AntiqueWhite3',
+		  -relief=>'groove',
+		  -borderwidth=>5,
+		  -command=>\&openf)->pack(
+						 -side=>'left',
+						  -expand=>1,
+						  -fill=>'none',
+						  -pady=>10);
+    $open->Button(
+		  -background=>'AntiqueWhite3',
+		  -font=>$myfont,
+		  -text=>'Cancel',
+		  -command=> sub{$open->destroy})->pack(
+							-side=>'left',
+							-expand=>1,
+							-fill=>'none',
+							-pady=>10);
+    $acframe=$open->Frame(
+		    -background=>'AntiqueWhite3',
+#		    -relief=>'groove',
+		     -borderwidth=>2)->pack(
+					    -pady=>10,-padx=>10,-side=>left);
+    $acframe->Radiobutton(-text=>'hold    ',
+			  -font=>$myfont,
+			  -background=>'AntiqueWhite3',
+			  -value=>0,
+			  -variable=>\$action)->pack(
+							-side=>'top',
+							-expand=>1,
+							-fill=>'none',
+							-pady=>2);
+    $acframe->Radiobutton(-text=>'release',
+			  -font=>$myfont,
+			  -background=>'AntiqueWhite3',
+			  -value=>1,
+			  -variable=>\$action)->pack(
+							-side=>'top',
+							-expand=>1,
+							-fill=>'none',
+							-pady=>2);
+
+    $filenet->focus;}
+
+sub openf{
+
+    if($fptr){$fptr->close_file($status);}
+    $file=$filename.".fits";
+    if(!(-e $file)){
+      errmess("file $file cannot be found");
+        return;}
+    $status=0;
+    $fptr=Astro::FITS::CFITSIO::open_file($file,Astro::FITS::CFITSIO::READONLY
+          (),$status);
+    if($status){errmess("Error $status opening file");}
+    $status=0;
+    $size=$wid=$npln=$errpln=0;
+    @$naxes=0;
+    $fptr->get_img_parm($bitpix,$naxis,$naxes,$status);
+    ($size,$wid,$npln)=@$naxes;
+    $tsize=$size;
+    if($npln != 2) {$npln=1;}
+    if($wid){$tsize*=$wid*$npln;}
+
+    $sz=$size-1;
+    $status=0;
+    if($naxis>1){
+      $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"D_SLIT",$dltaslt,undef,
+                      $status);
+      if($status){
+        $wid=1;
+        $errpln=1;}
+      else{
+        if($naxis==3){
+          $errpln=1;}
+      }
+    } 
+    $status=0;
+    $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"CRVAL1",$lambda0,undef,
+                    $status);
+    if($status){
+      errmess("Error reading file $file header CRVAL1");
+      return 1;}
+    $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"CDELT1",$dlambda,undef,
+                    $status);
+    if($status){
+      errmess("Error reading file $file header CDELT1");
+      return 1;}
+    $fptr->read_key(Astro::FITS::CFITSIO::TINT(),"NOD",$nod,undef,
+                    $status);
+    if($status){
+      $status=0;
+      $nod=0;
+      $nodstat=1;}
+    $fptr->read_key(Astro::FITS::CFITSIO::TFLOAT(),"N_SLITS",$nspec,undef,
+                    $status);
+    if($status){
+      $nspec=1;
+      $status=0;}
+    $status=0;
+    $smooth=int $smth/$dlambda;
+    $smooth=1 if ($smooth<1);
+    $lscale=$dlambda*sequence($size)+$lambda0;
+    @xval=list $lscale;
+    $lambda1=$lambda0+($size-1)*$dlambda;
+    $lamin = ($lambda0>$lmin) ? $lambda0 : $lmin;
+    $lamax = ($lambda1<$lmax) ? $lambda1 : $lmax;
+    $xmin = ($lamin>$lmm) ? $lamin: $lmm;
+    $xmax = ($lamax<$lmx) ? $lamax: $lmx;
+    $nobj=$probj=1;
+    $zoom=0;
+    
+    #if write enabled and 2dspec file, open 1dspec file
+    if($wrt && $wid>1){
+      $w1spec=1;
+      $file=~s/_2spec/_1spec/;
+      $optr=Astro::FITS::CFITSIO::open_file($file,
+                                    Astro::FITS::CFITSIO::READWRITE(),$status);
+      if($status){
+        errmess("Cannot open 1d stack file writing individual spectral files");
+        $w1spec=0;}
+      }
+    $status=get_spec();
+    if($status){return 1;}
+    plot_spec();
+    if($LOG) {print OUT "FILE $filename\n";}
+    $open->destroy if($action);}
+
+sub write_spec{
+
+  $status=0;
+  if($w1spec){
+    $optr->movabs_hdu($nobj,undef,$status);
+    if($status){errmess("Error $status writing file");}
+    $optr->write_pix(Astro::FITS::CFITSIO::TFLOAT(),[1,1],$ntobj,
+                     $FOBJ->get_dataref,$status);
+    print "wrote spectrum $nobj $objname\n";
+    if($status){errmess("Error $status writing file");}
+    }
+  else{
+    $file="!".$filename."_".$objname.".fits";
+    $optr=Astro::FITS::CFITSIO::create_file($file,$status);
+    if($status){errmess("Error $status creating file $file");}
+    $status=0;
+    $ndm=$errpln+1;
+    print "$size $wid $errpln $ndm\n";
+    @$naxes=($size,$ndm);
+    $optr->create_img(Astro::FITS::CFITSIO::FLOAT_IMG(),$ndm,$naxes,$status);
+    if($status){errmess("Error $status creating image");}  
+    $optr->write_key(Astro::FITS::CFITSIO::TFLOAT(),"CRVAL1",$lambda0,undef,
+                     $status);
+    $optr->write_key(Astro::FITS::CFITSIO::TFLOAT(),"CDELT1",$dlambda,undef,
+                     $status);
+    $optr->write_key(Astro::FITS::CFITSIO::TSTRING(),"OBJECT",$objname,undef,
+                     $status);
+    $optr->write_key(Astro::FITS::CFITSIO::TINT(),"SLITNUM",$slitnum,undef,
+                     $status);
+    if($status){errmess("Error $status writing file");}
+    $optr->write_img_flt(1,1,$ntobj,$FOBJ->get_dataref,$status);
+    print "wrote spectrum $nobj $objname\n";
+    if($status){errmess("Error $status writing file");}
+    $optr->close_file($status);}  
+  }
+    
+
+
+sub replot{
+
+    if($dlambda == 0){
+	$spref->destroy if($action);
+	return(1);}
+    $smooth=int $smth/$dlambda;
+    $smooth=1 if ($smooth<1);
+    $lamin = ($lambda0>$lmin) ? $lambda0 : $lmin;
+    $lamax = ($lambda1<$lmax) ? $lambda1 : $lmax;
+    get_spec();
+    plot_spec();
+    $spref->destroy;}
+
+sub errmess{
+
+    $errmessage=shift;
+    $nofile=$mw->Toplevel;
+    $nofile->title('');
+    $nofile->configure(-background=>'AntiqueWhite3');
+    $nofile->Label(-text=>"$errmessage",
+		   -font=>$myfont,
+		   -background=>'AntiqueWhite3')->pack(
+						-padx=>20,
+						-pady=>20);
+    $nofile->Button(
+		    -background=>'AntiqueWhite3',
+		    -relief=>'groove',
+		    -text=>'OK',
+		    -font=>$myfont,
+		    -borderwidth=>5,
+		    -command=>sub{$nofile->destroy})->pack(
+							   -side=>'left',
+							   -expand=>1,
+							   -fill=>'none',
+							   -pady=>10);}
+
+
+sub readlinf{
+
+    if(!(-e $lfile)){
+	errmess("cannot find line file");
+	return;}
+    open(LINES,"$lfile");
+    $nlines=0;
+    while(<LINES>){
+	chop;
+	($lines[$nlines],$type[$nlines],$label[$nlines],$lname[$nlines])=split;
+	$nlines++;}
+    close(LINES);}
+
+sub doto{
+    $smth=$smm;
+    $lamint=$lmnt;
+    if(Exists($lbt)){$lbt->destroy;}
+    if($llist){
+      readlinf();
+      show_buts();}
+    $lmin=$lmm;
+    $lmax=$lmx;
+    if($hhit){
+	get_spec();}
+    if($lhit){
+	readlinf();}
+    if($loghit){
+	if($LOG){
+	    close OUT;
+	    $LOG=0;}
+	if($logfile=~/\w/){
+	    $logfile=~s/\.log//;
+	    $logfile.=".log";
+	    open OUT,">$logfile";
+	    $LOG=1;}
+        }
+    replot();}
+
+######################### Set Preferences window ##############################
+
+sub set_pref{
+   
+    $lhit=0;
+    $loghit=0;
+    $hhit=0;
+    $spref=$mw->Toplevel;
+    $spref->title('');
+    $spref->configure(-background=>'AntiqueWhite3');
+    $spref->Label(
+		 -text=>"Set Preferences",
+		  -font=>$myfont,
+		 -background=>'AntiqueWhite3')->pack(-pady=>10);
+
+    $lmm=$lmin;
+#    $lmframe=$spref->Frame(
+#			-background=>'AntiqueWhite3',
+#			-borderwidth=>2)->pack(
+#				    -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+#    $lmframe->Label(
+#		    -background=>'AntiqueWhite3',
+#		    -font=>$myfont,
+#		    -text=>'Min Lambda:   ')->pack(
+#					    -pady=>1,-padx=>10,-side=>left);
+#    $lm=$lmframe->Entry(
+#			-background=>'AntiqueWhite3',
+#			-textvariable=>\$lmm,
+#			-font=>$myfont,
+#			-width=>6,
+#			-relief=>'sunken')->pack(
+#						 -pady=>1,-side=>left);
+#    $lm->focus;
+#    $lm->icursor('end');
+    
+    $lmx=$lmax;
+#    $lxframe=$spref->Frame(
+#			-background=>'AntiqueWhite3',
+#			-borderwidth=>2)->pack(
+#				    -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+#    $lxframe->Label(
+#		    -background=>'AntiqueWhite3',
+#		    -font=>$myfont,
+#		    -text=>'Max Lambda:  ')->pack(
+#					    -pady=>1,-padx=>10,-side=>left);
+#    $lx=$lxframe->Entry(
+#			-background=>'AntiqueWhite3',
+#			-textvariable=>\$lmx,
+#			-font=>$myfont,
+#			-width=>6,
+#			-relief=>'sunken')->pack(
+#						 -pady=>1,-side=>left);
+
+    $hframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+				    -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+     $hframe->Label(
+		    -background=>'AntiqueWhite3',
+		   -font=>$myfont,
+		    -text=>'Slit halfwidth:  ')->pack(
+					    -pady=>1,-padx=>10,-side=>left);
+    $hx=$hframe->Entry(
+			-background=>'AntiqueWhite3',
+		       -font=>$myfont,
+			-textvariable=>\$hlfwd,
+			-width=>3,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>left);
+    $hx->Tk::bind("<Key>",[sub{$hhit=1}]);
+
+    $smm=$smth;
+    $smframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+				     -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+    $smframe->Label(
+		    -background=>'AntiqueWhite3',
+		    -font=>$myfont,
+		    -text=>'Smoothing (A):')->pack(
+					       -pady=>1,-padx=>10,-side=>left);
+    $smt=$smframe->Entry(
+			-background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			-textvariable=>\$smm,
+			-width=>3,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>left);
+
+    $lmnt=$lamint;
+    $lmnt=~s/\.[0-9][0-9][0-9]+//;
+      
+    $leframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+				     -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+    $leframe->Label(
+		    -background=>'AntiqueWhite3',
+		    -font=>$myfont,
+		    -text=>'Exam hlfwdth: ')->pack(
+					       -pady=>1,-padx=>10,-side=>left);
+    $leframe->Entry(
+			-background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			-textvariable=>\$lmnt,
+			-width=>3,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>left);
+
+    $ndframe=$spref->Frame(
+                           -background=>'AntiqueWhite3',
+                           -borderwidth=>2)->pack(
+                                      -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+    $ndframe->Label(
+                    -background=>'AntiqueWhite3',
+                    -font=>$myfont,
+                    -text=>'Default nod:     ')->pack(
+                                                -pady=>1,-padx=>10,-side=>left);
+    $ndf=$ndframe->Entry(
+                         -background=>'AntiqueWhite3',
+                         -font=>$myfont,
+                         -textvariable=>\$ndd,
+                         -width=>3,
+                         -relief=>'sunken')->pack(
+                                                  -pady=>1,-side=>left);
+    
+    $pfframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+				              -pady=>5,-padx=>10,-side=>top);
+    $pfframe->Label(
+		    -background=>'AntiqueWhite3',
+		    -font=>$myfont,
+		    -text=>'Line list file:    ')->pack(
+				              -pady=>1,-padx=>10,-side=>left);
+    $pft=$pfframe->Entry(
+			-background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			-textvariable=>\$lfile,
+			-width=>25,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>top);
+
+    $pft->Tk::bind("<Key>",[sub{$lhit=1}]);
+
+    $logframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+				              -pady=>5,-padx=>10,-side=>top);
+    $logframe->Label(
+		    -background=>'AntiqueWhite3',
+		    -font=>$myfont,
+		    -text=>'Log file:          ')->pack(
+				              -pady=>1,-padx=>10,-side=>left);
+    $lgf=$logframe->Entry(
+			-background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			-textvariable=>\$logfile,
+			-width=>25,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>top);
+
+    $lgf->Tk::bind("<Key>",[sub{$loghit=1}]);
+
+   $llframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+			       -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+    $llframe->Label(
+		    -background=>'AntiqueWhite3',
+		    -font=>$myfont,
+		    -text=>'Line buttons:  ')->pack(
+					       -pady=>1,-padx=>10,-side=>left);
+   $llframe->Checkbutton(
+			 -background=>'AntiqueWhite3',
+			 -highlightthickness=>0,
+			 -variable=>\$llist)->pack(
+						 -pady=>1,-side=>left);
+   
+   $dzframe=$spref->Frame(
+                          -background=>'AntiqueWhite3',
+                          -borderwidth=>2)->pack(
+                                  -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+   $dzframe->Label(
+                   -background=>'AntiqueWhite3',
+                   -font=>$myfont,
+                   -text=>'EW/(1+z)        ')->pack(
+                                    -pady=>1,-padx=>10,-side=>left);
+   $dzframe->Checkbutton(
+                         -background=>'AntiqueWhite3',
+                         -highlightthickness=>0,
+                         -variable=>\$DRED)->pack(
+                                                   -pady=>1,-side=>left);
+   
+   $sclframe=$spref->Frame(
+                          -background=>'AntiqueWhite3',
+                          -borderwidth=>2)->pack(
+                                    -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+   $sclframe->Label(
+                   -background=>'AntiqueWhite3',
+                   -font=>$myfont,
+                   -text=>'Autoscale:      ')->pack(
+                                              -pady=>1,-padx=>10,-side=>left);
+   $sclframe->Checkbutton(
+                         -background=>'AntiqueWhite3',
+                         -highlightthickness=>0,
+                         -variable=>\$autoscl)->pack(
+                                                   -pady=>1,-side=>left);
+   
+   $scvlframe=$spref->Frame(
+                           -background=>'AntiqueWhite3',
+                           -borderwidth=>2)->pack(
+                                        -fill=>'x',-pady=>5,-padx=>10,-side=>top);
+   $scvlframe->Label(
+                    -background=>'AntiqueWhite3',
+                    -font=>$myfont,
+                    -text=>'Min, max inten:')->pack(
+                                                 -pady=>1,-padx=>10,-side=>left);
+   $scvlframe->Entry(
+                   -background=>'AntiqueWhite3',
+                   -font=>$myfont,
+                   -textvariable=>\$val0,
+                   -width=>5,
+                   -relief=>'sunken')->pack(
+                                            -pady=>1,-side=>left);
+   $scvlframe->Entry(
+                     -background=>'AntiqueWhite3',
+                     -font=>$myfont,
+                     -textvariable=>\$val1,
+                     -width=>6,
+                     -relief=>'sunken')->pack(
+                                              -padx=>3,-pady=>1,-side=>left);
+   
+   
+   $sbframe=$spref->Frame(
+			-background=>'AntiqueWhite3',
+			-borderwidth=>2)->pack(
+				              -pady=>10,-padx=>10,-side=>top);
+    $sbframe->Button(
+		     -text=>'OK',
+		     -font=>$myfont,
+		     -background=>'AntiqueWhite3',
+		     -relief=>'groove',
+		     -borderwidth=>5,
+		     -command=>\&doto)->pack(
+					       -side=>'left',
+					       -expand=>1,
+					       -fill=>'none',
+					       -pady=>10,-padx=>10);
+    $sbframe->Button(
+		     -background=>'AntiqueWhite3',
+		     -font=>$myfont,
+		     -text=>'Cancel',
+		     -command=> sub{$spref->destroy})->pack(
+							  -side=>'left',
+							  -expand=>1,
+							  -fill=>'none',
+							  -pady=>10,-padx=>10);
+    
+    }
+
+
+      
+##############################line window######################################
+
+sub show_buts{
+    $lbt=$mw->Toplevel;
+    $lbt->title('');
+    $lbt->configure(-background=>'AntiqueWhite3');
+    $lbt->Label(
+		 -text=>"Pick Line",
+		  -font=>$myfont,
+		 -background=>'AntiqueWhite3')->pack(-pady=>10);
+
+    for($n=0;$n<$nlines;$n++){
+	if($lname[$n] ne ""){
+	    $lbt->Button(
+			 -background=>'AntiqueWhite3',
+			 -font=>$myfont,
+#			 -command=>sub{$lam0=$lines[$n]},
+			 -command=>[\&set_lam, $n],
+			 -text=>$lname[$n])->pack(
+			 -fill=>'x',-pady=>3,-padx=>3,-side=>top);}
+        }
+}
+
+sub set_lam{
+
+    $nn=shift;
+    $lam0=$lines[$nn];
+      calcz();
+}
+
+sub  slm{
+    calcz();
+}
+
+#########################contrast window######################################
+
+sub set_contr{
+    $sct=$mw->Toplevel;
+    $sct->title('');
+    $sct->configure(-background=>'AntiqueWhite3');
+    $sct->Label(
+		 -text=>"Set intensity range",
+		  -font=>$myfont,
+		 -background=>'AntiqueWhite3')->pack(-pady=>10);
+
+$lowframe=$sct->Frame(
+		     -background=>'AntiqueWhite3',
+		     -borderwidth=>2)->pack(
+			     -pady=>10,-padx=>10,-side=>top);
+$lowframe->Label(
+		 -background=>'AntiqueWhite3',
+		 -font=>$myfont,
+		 -text=>'Highest intensity:')->pack(
+					   -pady=>1,-padx=>10,-side=>left);
+$lvl=$lowframe->Entry(
+			-background=>'AntiqueWhite3',
+			-textvariable=>\$lowval,
+			-font=>$myfont,
+			-width=>8,
+			-relief=>'sunken')->pack(
+					       -pady=>1,-side=>left);
+$lvl->icursor('end');
+$lvl->Tk::bind("<Return>",[\&spimage]);
+
+$hiframe=$sct->Frame(
+		     -background=>'AntiqueWhite3',
+		     -borderwidth=>2)->pack(
+			     -pady=>10,-padx=>10,-side=>top);
+$hiframe->Label(
+		 -background=>'AntiqueWhite3',
+		 -font=>$myfont,
+		 -text=>'Lowest intensity:')->pack(
+					   -pady=>1,-padx=>10,-side=>left);
+$hvl=$hiframe->Entry(
+			-background=>'AntiqueWhite3',
+			-textvariable=>\$hival,
+			-font=>$myfont,
+			-width=>8,
+			-relief=>'sunken')->pack(
+					       -pady=>1,-side=>left);
+$hvl->icursor('end');
+$hvl->Tk::bind("<Return>",[\&spimage]);
+
+$DnButton=$sct->Button(
+			-background=>'AntiqueWhite3',
+			-text=>'Done',
+			-font=>$myfont,
+	      	-command=> \&cont_done)->pack(
+					-pady=>10,-padx=>10,-side=>top);
+}
+
+sub set_small_win{
+    $plotwidth=680;
+    $plotheight=420;
+    clearplt();
+    plot_spec();
+}
+
+sub set_large_win{
+    $plotwidth=680;
+    $plotheight=544;
+    clearplt();
+    plot_spec();
+}
+
+sub cont_done{
+
+    spimage();
+    $sct->destroy;
+}
+
+sub r_cosparam{
+
+#  R_COSPARAM-reads input data from file in standard IRAF PAR file format. looks
+#             in COSMOS directory structure
+#
+#  input: $pfile = name of parameter file
+#
+#  output: %pars = hash of parameter values
+
+	my $pfile=shift;
+  my $parfile=$ENV{'COSMOS_PAR_DIR'}.'/'.$pfile.'.json';
+  if(!(-e $parfile)){
+    die("Missing parameter file $parfile!\n");}
+
+	open(INPUT,$parfile);
+	my @params=<INPUT>;
+	foreach (@params){
+		chop;
+		if($_=~m/[a-zA-Z]/){
+		    $p=$_;
+		    $p=~s/\"(.*?)\":.+/\1/;
+		    s/\".*?\"://;
+		    s/,//;
+		    s/\"//g;
+		    $parm{$p}=$_;}
+#    print "$p $parm{$p}\n";
+		}
+	return %parm;}
+
+######################## examine line window ##################################
+
+sub examn{
+  if(Exists($exam)){
+    $exam->raise;}
+  examine();}
+
+sub examine{
+
+  if(!Exists($exam)){
+    $exwin=1;  
+    $exam=$mw->Toplevel;
+    $exam->title('');
+    $exam->configure(-background=>'AntiqueWhite3');
+    $exam->Label(
+                 -text=>"Examine line",
+                 -font=>$bigfont,
+                 -background=>'AntiqueWhite3')->pack(-pady=>10);
+
+# plot frame
+
+    $epltframe=$exam->Frame( 
+                             -borderwidth=>10,
+                             -background=>'AntiqueWhite3',
+                             -relief=>'groove')->pack(-padx=>30,-pady=>20);
+
+    $epicframe=$epltframe->Frame(
+                                 -borderwidth=>2,
+                                 -background=>'AntiqueWhite3',
+                                 -relief=>'groove')->pack(-padx=>3,-pady=>3);
+    $eplot=$epicframe->Canvas(
+                              -width=>$ewidth,
+                              -height=>$eheight,
+                              -background=>'white',
+                              -cursor=>'crosshair')->pack;
+    $eplot->Tk::bind("<Button-1>",[\&fit_line,Ev('x'),Ev('y')]);
+	
+# buttons
+	
+    $ebf=$exam->Frame(-background=>'AntiqueWhite3')->pack(
+                                                          -pady=>5,-side=>bottom);
+    $ebf->Button(
+                 -background=>'AntiqueWhite3',
+                 -text=>'Clear',
+                 -font=>$myfont,
+                 -command=>\&clear)->pack(
+                                          -pady=>10,-padx=>10,-side=>left);
+    $ebf->Button(
+                 -background=>'AntiqueWhite3',
+                 -text=>'Done',
+                 -font=>$myfont,
+                 -command=> \&donexam)->pack(
+                                              -pady=>10,-padx=>10,-side=>left);
+
+	$ebf->Button(
+		     -background=>'AntiqueWhite3',
+		     -text=>'Record',
+		     -font=>$myfont,
+		     -command=> \&record)->pack(
+					      -pady=>10,-padx=>10,-side=>left);
+
+	$ebf->Button(
+		     -background=>'AntiqueWhite3',
+		     -text=>'Print',
+		     -font=>$myfont,
+		     -command=> \&printplot)->pack(
+					      -pady=>10,-padx=>10,-side=>left);
+
+# boxes
+
+	$ebf2=$exam->Frame(-background=>'AntiqueWhite3')->pack(
+						       -pady=>1,-side=>bottom);
+
+	$elamframe=$ebf2->Frame(
+				-background=>'AntiqueWhite3',
+				-borderwidth=>2)->pack(
+					       -pady=>10,-padx=>7,-side=>left);
+
+	$elamframe->Label(
+			  -background=>'AntiqueWhite3',
+			  -font=>$myfont,
+			  -text=>'Lambda:')->pack(
+					       -pady=>1,-padx=>10,-side=>left);
+	$elamframe->Label(
+			  -background=>'AntiqueWhite3',
+			  -textvariable=>\$lambda,
+			  -font=>$myfont,
+			  -width=>9,
+			  -relief=>'sunken')->pack(
+						   -pady=>1,-side=>left);
+
+	$el0frame=$ebf2->Frame(
+			       -background=>'AntiqueWhite3',
+			       -borderwidth=>2)->pack(
+					    -pady=>10,-padx=>7,-side=>left);
+
+	$el0frame->Label(
+			 -background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			 -text=>'Rest Lambda:')->pack(
+					   -pady=>1,-padx=>10,-side=>left);
+
+	$eLam0=$el0frame->Entry(
+				-background=>'AntiqueWhite3',
+				-font=>$myfont,
+				-textvariable=>\$lam0,
+				-width=>9,
+				-relief=>'sunken')->pack(
+					                 -pady=>1,-side=>left);
+	$eLam0->icursor('end');
+	$eLam0->Tk::bind("<Return>",[\&slm]);
+
+	$ezframe=$ebf2->Frame(
+			      -background=>'AntiqueWhite3',
+			      -borderwidth=>2)->pack(
+					    -pady=>10,-padx=>7,-side=>left);
+
+	$ezframe->Label(
+			-background=>'AntiqueWhite3',
+			-font=>$myfont,
+			-text=>'z:')->pack(
+				           -pady=>1,-padx=>10,-side=>left);
+	$ezframe->Entry(
+			-background=>'AntiqueWhite3',
+			-font=>$myfont,
+			-textvariable=>\$zed,
+			-width=>$nplcs,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>left);
+
+	$ewframe=$ebf2->Frame(
+			      -background=>'AntiqueWhite3',
+			      -borderwidth=>2)->pack(
+					    -pady=>10,-padx=>7,-side=>left);
+
+	$ewframe->Label(
+			-background=>'AntiqueWhite3',
+			-font=>$myfont,
+			-text=>'sigma:')->pack(
+					       -pady=>1,-padx=>10,-side=>left);
+	$ewframe->Entry(
+			-background=>'AntiqueWhite3',
+			-font=>$myfont,
+			-textvariable=>\$sigma,
+			-width=>5,
+			-relief=>'sunken')->pack(
+						 -pady=>1,-side=>left);
+
+	$eqwframe=$ebf2->Frame(
+			       -background=>'AntiqueWhite3',
+			       -borderwidth=>2)->pack(
+					    -pady=>10,-padx=>7,-side=>left);
+
+	$eqwframe->Label(
+			 -background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			 -text=>'EW:')->pack(
+					     -pady=>1,-padx=>10,-side=>left);
+	$eqwframe->Entry(
+			 -background=>'AntiqueWhite3',
+			 -font=>$myfont,
+			 -textvariable=>\$ewid,
+			 -width=>5,
+			 -relief=>'sunken')->pack(
+						  -pady=>1,-side=>left);
+      $exam->raise;
+    }
+
+    $nhits=0;
+    $el0=int(($lambda-$lamint-$lambda0)/$dlambda);
+    $el0=($el0>0) ? $el0 : 0;
+    $el1=int(($lambda+$lamint-$lambda0)/$dlambda);
+    $el1=($el1<=$size-1) ? $el1 : $size-1;
+    $elsize=$el1-$el0+1;
+    $els1=$elsize-1;
+    $els2=$elsize*2;
+    $EOBJ=$TOBJ0->slice("$el0:$el1");
+    $e0=$lambda0+$el0*$dlambda;
+    $e1=$lambda0+$el1*$dlambda;
+    $emin=min($EOBJ);
+    $emax=max($EOBJ);
+    if($emin<-$emax){
+	$emin=-$emax;}
+    $de=0.1*($emax-$emin);
+    $emin-=$de;
+    $emax+=$de;
+    $XVL=sequence($elsize);
+    $XVL=$e0+$XVL*$dlambda;
+    $ONES=ones(2);
+    $X1=outer($XVL,$ONES);
+    ($II=$X1->slice("0:$els1,0:0")).=($X1->slice("0:$els1,0:0"))-$dlambda/2.;
+    ($II=$X1->slice("0:$els1,1:1")).=($X1->slice("0:$els1,1:1"))+$dlambda/2.;
+    $XVAL=($X1->xchg(0,1))->clump(2);
+    $EOJ=outer($EOBJ,$ONES);
+    $EV=($EOJ->xchg(0,1))->clump(2);
+    @xxval=list $XVAL;
+    @yyval=list $EV;
+    $LV=(convolve $EOBJ,ones($smooth))/$smooth;
+    @xsval=list $XVL;
+    @ysval=list $LV;
+    pgbegin(0,"/gif",1,1);
+    pgpage; 
+    pgpap(7.0,0.75);
+    pgsch(1);
+    pgscr(0,1,1,1);
+    pgscr(1,0,0,0);
+    pgask(0);
+    pgenv($e0,$e1,$emin,$emax,0,0);
+    pglabel('Lambda','Flux',"Click on continuum levels at edges");
+    pgsch(3);
+    pgline($els2,\@xxval,\@yyval);
+    pgsci(4);
+    pgline($elsize,\@xsval,\@ysval);
+    pgsci(1);
+    pgend;
+    $graph=$eplot->Photo(
+		      -file=>"pgplot.gif");
+    $eplot->createImage($ewidth/2,$eheight/2,-image=>$graph);}
+
+sub donexam{
+  $exam->destroy;
+  $exwin=0;}
+
+sub fit_line{
+
+    $a=shift;
+    $xx=shift;
+    $yy=shift;
+    $xx=$eplot->canvasx($xx);
+    $ev[1]=$e0+($e1-$e0)*($xx-42)/505.;
+    $yy=$eplot->canvasy($yy);
+    $ef[1]=$emin+($emax-$emin)*(407-$yy)/356.;
+    if($nhits==0){
+	$ef[0]=$ef[1];
+	$ev[0]=$ev[1];
+	$nhits=1;
+	return;}
+    #fit line
+    $p0=int(($ev[0]-$e0)/$dlambda);
+    $p1=int(($ev[1]-$e0)/$dlambda);
+    $np=$p1-$p0+1;
+    $np1=int($np/10)+1;
+    $npm=$np+$np1-1;
+    $npt=$np+2*$np1;
+    $p01=$p0-$np1;
+    $p11=$p1+$np1;
+    $LNFX=$EOBJ->slice("$p01:$p11");
+    $LMBD=sequence($npt);
+    $ip0=$p01*$dlambda+$e0;
+    $LMBD=$ip0+$LMBD*$dlambda;
+    $CONT=sequence($np);
+    $CONT=$ef[0]+($ef[1]-$ef[0])*$CONT/($np-1);
+    $LNF=zeroes($npt);
+    ($II=$LNF->slice("$np1:$npm")).=($LNFX->slice("$np1:$npm"))-$CONT;
+    $absp=0;
+    if(avg($LNFX)<($ef[0]+$ef[1])/2.){
+      $absp=1;
+      $LNF=-$LNF;}
+    ($lambda,$pk,$fwhm2,$back,$err,$FIT) = fitgauss1d($LMBD,$LNF);
+    $lambda=~s/\.([0-9][0-9][0-9])[0-9]+/\.\1/;
+    $sigma=$fwhm2/2.35;
+    $sigma=~s/\.([0-9])[0-9]+/\.\1/;
+    if($lam0>0){
+      $z=($lambda/$lam0)-1.;}
+    else{
+      $z=0.;}
+    $ewid=-2.507*$sigma*$pk/($ef[0]+($ef[1]-$ef[0])*($lambda-$ev[0])/($ev[1]
+	  -$ev[0]));
+    print "$ewid ";
+    if($DRED){$ewid/=($z+1);}
+    print "$ewid\n";
+    $ewid=~s/\.([0-9])[0-9]+/\.\1/;
+    if($absp){
+      $FIT=-$FIT;
+      $ewid=-$ewid;}
+    $zed=$z;
+    if($prec==3){$zed=~s/\.([0-9][0-9][0-9])[0-9]+/\.\1/;}
+    if($prec==4){$zed=~s/\.([0-9][0-9][0-9][0-9])[0-9]+/\.\1/;}
+    if($prec==5){$zed=~s/\.([0-9][0-9][0-9][0-9][0-9])[0-9]+/\.\1/;}
+    if($prec==6){$zed=~s/\.([0-9][0-9][0-9][0-9][0-9][0-9])[0-9]+/\.\1/;}
+    $FAT=($FIT->slice("$np1:$npm"))+$CONT;
+    $LA=$LMBD->slice("$np1:$npm");
+    @fvl=list $FAT;
+    @lvl=list $LA;
+    pgbegin(0,"/gif",1,1);
+    pgpage; 
+    pgpap(7.0,0.75);
+    pgsch(1);
+    pgscr(0,1,1,1);
+    pgscr(1,0,0,0);
+    pgask(0);
+    pgenv($e0,$e1,$emin,$emax,0,0);
+    pglabel('Lambda','Flux',"Click on continuum levels at edges");
+    pgsch(3);
+    pgline($els2,\@xxval,\@yyval);
+    pgsci(4);
+    pgline($elsize,\@xsval,\@ysval);
+    pgsci(2);
+    pgline($np,\@lvl,\@fvl);
+    pgsci(1);
+    pgend;
+    $graph=$eplot->Photo(
+		      -file=>"pgplot.gif");
+    $eplot->createImage($ewidth/2,$eheight/2,-image=>$graph);}
+
+sub printplot{
+
+    pgbegin(0,"/ps",1,1);
+    pgpage; 
+    pgpap(7.0,0.75);
+    pgsch(1);
+    pgscr(0,1,1,1);
+    pgscr(1,0,0,0);
+    pgask(0);
+    pgenv($e0,$e1,$emin,$emax,0,0);
+    pglabel('Lambda','Flux',"");
+    pgsch(3);
+    pgline($els2,\@xxval,\@yyval);
+    pgline($np,\@lvl,\@fvl);
+    pgsci(1);
+    pgend;}
+
+sub record{
+
+    if($LOG){print OUT "$lam0 $zed $sigma $ewid\n";}
+    clear();
+    }
+
+
+sub clear{
+
+    $nhits=0;
+    $sigma="";
+    $ewid="";
+    pgbegin(0,"/gif",1,1);
+    pgpage; 
+    pgpap(7.0,0.75);
+    pgsch(1);
+    pgscr(0,1,1,1);
+    pgscr(1,0,0,0);
+    pgask(0);
+    pgenv($e0,$e1,$emin,$emax,0,0);
+    pglabel('Lambda','Flux',"Click on continuum levels at edges");
+    pgsch(3);
+    pgline($els2,\@xxval,\@yyval);
+    pgsci(4);
+    pgline($elsize,\@xsval,\@ysval);
+    pgend;
+    $graph=$eplot->Photo(
+			 -file=>"pgplot.gif");
+    $eplot->createImage($ewidth/2,$eheight/2,-image=>$graph);}

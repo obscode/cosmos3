@@ -1,0 +1,9 @@
+smooth,i,h,10,,,"size of smoothing box in angstroms"
+linelist,s,h,"linelistfile",,,"galaxy line list"
+nod,i,h,0,,,"telescope nod distance, in pixels"
+shuffle,b,h,n,,,"shuffled spectra?"
+hlfwdth,i,h,2,,,"halfheight of spectrum extraction box"
+lamint,r,h,100.000000,,,"halfwidth of line exam window"
+lambda0,r,h,4000.000000,,,"minimum wavelength to display"
+lambda1,r,h,9500.000000,,,"maximum wavelength to display"
+mode,s,h,"q1",,,

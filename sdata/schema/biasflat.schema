@@ -1,0 +1,20 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"biasflat schema",
+"type":		"object",
+"properties":	{
+	"DEWAR":  {
+		"type":  "string",
+		"enum":  ["E2V", "LDSS3", "LDSS3C", "Mos3", "SITE", "SITE2"],
+		"description":  "dewar name"},
+	"SPEED":  {
+		"type":  "string",
+		"description":  "readout speed"},
+	"FLAT_FILE":  {
+		"type":  "string",
+		"description":  "flat field frame"},
+	"BIAS_FILE":  {
+		"type":  "string",
+		"description":  "bias frame"}
+	}
+}

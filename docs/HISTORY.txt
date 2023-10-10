@@ -1,0 +1,505 @@
+  /-------------------------\
+ |  COSMOS Revision History  |
+  \-------------------------/
+
+COSMOS 3.00 -released
+
+General
+Ñ system now distributed as virtual machine
+Ñ new short camera distortion maps
+Ñ improved chip positions in dewar definition files
+Ñ new parameter file format allows editpar to validate entries
+Ñ new programs remove need for IRAF display routines during reductions
+- Updated documentation
+align-mask
+Ñ removed 3 spectral line limit
+Ñ added solution for disperser misalignment
+Ñ allow iterations and auto mode
+Ñ added update to dewar offset file and disperser misaligment in obsdef file
+Ñ relaxed limits on number of slit images that can be analyzed
+adjust-map
+Ñ bug fixes
+Ñ modified which map parameters can be updated
+defineobs
+Ñ new python-based gui with added features
+editpar
+Ñ now validates entries for correct data type, permitted values
+map-spectra
+Ñ allow mapping of partial slits
+Ñ better handling of long, curved slits
+Ñ map files include additional information needed for programs whatsthat and mark-slits
+subsky
+Ñ bug fix for improved handling of long, curved slits
+Ñ fixed bugs generating memory leaks
+
+NEW PROGRAMS
+
+adjust-mask
+Ñ interactive adjusting of dewar offset files
+display
+Ñ replaces IRAF display
+mark-slits
+Ñ replaces apertures, spectral-lines, spectral-map plus IRAF tvmark
+whatsthat
+Ñ interactive identification of slit and wavelength in spectral image
+extract-spec
+Ñ features of extract-2dspec plus optional 1-d optimal extraction
+Ñ extract-2dspec bug fix for improved handling of long, curved slits
+1dspec
+Ñ optimal or rectangular 1-d extraction from 2spec files
+fitsheader
+Ñ replaces IRAF imheader
+
+
+UNCHANGED:
+
+- badorders
+- biasflat
+- Sflats
+- spec2big
+- stitch
+- sumspec
+- quick-list
+- viewspectra
+
+ELIMINATED:
+
+- ldss3-patterm
+- ifu-image
+
+REDUNDANT BUT RETAINED:
+? 
+- mosaic
+- spectral-lines
+- spectral-map
+- apertures
+
+
+Cosmos 2.21 - released 8-29-14
+  - updated defineobs (and defineobs.py) to accommodate new LDSS3-C data
+  - updated opticdef.dat with newer ALIGNROT values for some dispersers
+  - added new dewar definition files for LDSS3-C
+  - updated some dewar offset files
+  - updated HeNeAr line lists with redder lines
+  - updated example obsdef files for newer data
+  - updated display8.cl to print warnings
+  - added shortcut keys to viewspectra
+  - added new sample IMACS f/2 data
+  - updated documentation
+
+Cosmos 2.20 - released 7-2-14
+  - updated documentation, including consolidating available downloads
+    into a Downloads page
+  - reverted defineobs to previous format which asks for the observation
+    date and has the basic camera choices for IMACS
+  - added simple command-line version of defineobs called defineobs.py
+    written in Python and requires no additional dependencies
+  - fixed bug in extract-2dspec when running on a single longslit
+  - fixed bug in adjust-map when running through a second pass
+  - added new parameters to subsky:
+  	edge2  		number of rows to exclude for other slit edge
+	objshift	number of pixels to shift object position by 
+  - added new optional flags for subsky:
+  	-o <object_id>	run subsky only on <object>
+	-r 		load previous sky-subtracted spectra
+	-p <par_file>	use <par_file>.par instead of subsky.par
+  - fixed issue with various programs reading bias-subtracted frames
+  - fixed issues when compiling under Mac OS X 10.9 (Mavericks) 
+  - extract-2dspec and sumspec now preserve more of the original header 
+    information
+
+Cosmos 2.19 - released 4-26-13
+  - important bug fixes and improvements for longslit data
+  - fixed bug in extract-2dspec so that 'edge' parameter now works
+  - fixed bugs in defineobs that arise when loading an obsdef file
+  - updated biasflat so that the gain values are no longer input by user
+  - corrected slit width in longslit SMF files
+
+Cosmos 2.18 - released 9-24-12
+  - updated files and programs to accommodate new camera at f/4
+  - fixed bug in main programs that arises when long paths are stored 
+    in COSMOS_IMAGE_DIR and COSMOS_PAR_DIR
+  - updated defineobs to no longer ask for a date, but have all the 
+    dewar choices under the camera drop-down menu; updated defineobs.html 
+    documentation to reflect these changes
+
+Cosmos 2.17 - released 3-7-12
+  - added Makefile-ldss3.Mac-Intel for building ldss3-pattern on Macs 
+    running Mac OS X 10.6.x and later
+  - updated Makefile.x86_64 for Fedora 13 and later
+  - fixed bug in adjust-offset that affected some of the dewoff files
+  - updated documentation with additional tips for installing COSMOS on 
+    Mac OS X 10.6.x (Snow Leopard) and later, and on Fedora 13 or later
+  - updated Running.html (Installing and running COSMOS) and FAQ.html
+    (Frequently Asked Questions) documentation pages
+  - updated default .obsdef files in $COSMOS_HOME/examples/obsdef to have
+    D_ALIGNROT also, to be consistent with what defineobs outputs
+
+Cosmos 2.16 - released 7-2-10
+  - updated defineobs GUI to enable the user to edit the "Disperser 
+    Misalignment" (D_ALIGNROT) 
+  - updated align-mask to warn users if more than 3 lines are used in the 
+    input line list file
+  - updated Cookbook to include another step of spot-checking the features 
+    before proceeding with align-mask
+  - updated all Makefiles so that the Fortran compiler can be edited within 
+    the Makefile for compiling the libraries
+
+Cosmos 2.15 - released 3-5-10
+  - updated align-mask to be compatible with data sets with less than 8 chips
+  - updated map-spectra to specify number of chips being read in
+  - updated Sflats and subsky for smaller data sets
+  - included log file of session run with IMACS_sc sample data to 
+    supplement Cookbook
+  - updated Cookbook, FAQ documentation pages
+
+Cosmos 2.14 - released 1-29-10
+  - updated Makefile.Mac-Intel for building Cosmos on Mac OS X 10.6 
+    (Snow Leopard)
+  - added parameter in align-mask.par which gives the ability to modify the 
+    PGPLOT window size
+  - corrected uninitialized array problem in adjust-map
+  - updated documentation to include tips for compiling your own binaries 
+    on Mac OS X 10.6 (Snow Leopard)
+
+Cosmos 2.13 - released 6-15-09
+  - new fp2ccd and E2V dewdef files added to replace the preliminary files in
+    the 2.12 release
+  - reduced the incidence of numerical errors in adjust-map
+
+Cosmos 2.12 - released 2-25-2009
+  - corrected the header output for logarithmic wavelength binning (CDELT1)
+    for extract-2dspec
+
+Cosmos 2.11 - released 2-23-09
+  - added support for the red 300 line grism
+  - added support for D_ALIGNROT for all the IMACS grisms
+  - fixed a sign error with the zeroth and second moment calculations 
+    in adjust-map for Xdisper = 0 in chips 5-8
+
+Cosmos 2.10 - released 7-31-08
+  - added E2V dewdef
+  - added corrections for the N&S grism rotation 
+  - added line-curvature fitting to adjust-map, now works with longslit data
+  - added option to run subsky without sky subtraction
+  - added robust clipping to align-mask
+  - added SMF files for standard longslit masks for LDSS3
+  - added Makefile for 64-bit architectures
+  - fixed pointer array issues with 64-bit architectures
+  - fixed binning in stitch
+  - fixed missing header keyword datasec in stitch
+  - fixed compiler warnings for missing include file string.h in align-mask.c
+    apertures.c badorders.c cos_futils.c ifu-image.c map-spectra.c mosaic.c
+    and spectral-lines.c
+
+
+Cosmos 2.08 - released 12-19-07
+  - added MOE2 functionality
+  - fixed bug with CFITSIO3
+  - added object information in the adjust-map plots
+  - added linelists for MOE and MOE2
+  - temporary fix for spectral-map and long linelists
+  - delayed release of FFTW3 compatibility for ldss3-pattern
+    due to performance issues
+  - fixed issue with Makefiles needing spaces before backslashes that
+    are continuing commands onto the next line
+
+
+Cosmos 2.06 - released 8-23-07
+  - added new program spec2big, converts from extensions to equispec format
+  - added new program ldss3-pattern, removes pattern noise from LDSS3 data
+  - improvements in performance for ldss3-pattern
+  - added Makefiles for ldss3-pattern.
+  - changed behavior of logarithmic binning in extract-2dspec 
+  - changed headers for extract-2dspec and sumspec to standard FITS headers
+  - re-added histogram mode to adjust-map in order to distinguish between
+    slits better
+  - fixed bug with adjust-map for a rare failure mode, where fit
+    is not calculated because of insufficient data
+  - fixed bug with stitch incorrectly displaying the wrong size for the
+    header keyword datasec.
+  - added the SMF file for the IMACS center-field slit mask.
+  - added SMF files for the LDSS3 standard long slit masks.
+  - added Makefile for Intel Macs.
+  - updated FAQ documentation 
+  - added documentation on creating and modifying dewoff files.
+
+
+
+Cosmos 2.04 - released 12-8-06
+  -  programs modified to reduce MOE data
+  -  bug in process-2spec corrected
+  -  new fitting procedure in adjust-map
+  -  bug fixes in extract-2dspec. Additional option for adjusting scale
+  -  new program badorders
+  -  programs modified to permit unequal x,y binning
+  -  display8 modified to handle 2x2 and 4x4 binned data and missing chips
+  -  small change in map-spectra error handling
+  -  correct bug in handling of tilted slits in adjust-map
+  -  add option to adjust-map to specify name of new map file
+  -  Sflats bugfixes
+
+
+
+Cosmos 2.02-p3-b9 - released 7-27-06:
+  adjust-map.c:
+  - added histogram mode in order to distinguish between slits better 
+    (deprecated in 2.04).
+
+
+
+Cosmos 2.02-p3-b8 - released 7-6-06
+  adjust-map.c:
+  - fixed bug with various wavelength ranges providing different fits,
+    it now checks the map for the wavelength range to use.
+
+
+
+Cosmos 2.02-p3-b7 - released 6-22-06
+  Makefile.linux:
+  - fixed issue with Makefile not being generic enough.
+
+  adjust-map.c:
+  - fixed bug with slits on the edge not being included.
+
+
+
+Cosmos 2.02-p3-b6 - released 6-1-06
+  adjust-map.c:
+  - fixed bug with over-fitting He Ne Ar lines, filters out lines that are
+    outside of wavelength range
+
+  extract-2dspec.c:
+  - fixed star trace problem for 2x2 binned data
+
+
+
+Cosmos 2.02-p3-b5 - released 5-9-06
+  extract-2dspec.c:
+  - fixed star trace problem and scale and rotation issues
+
+  sumspec.par:
+  - updated to include the missing parameters "iterations" and "both"
+
+  sumspec.html:
+  - updated to Gus's new version of documentation describing the new parameters
+
+  biasflat.c:
+  - fixed header issue in which biasflat would bomb if the header was a non-
+    standard length (i.e. spaces in the header)
+
+  subsky.c:
+  - added precautionary measure with the header in case biasflat was not
+    used to fix the non-standard header
+
+
+
+Cosmos 2.02-p3-b4 - released 4-14-06
+  subsky.c:
+  - fixed bad pixel map for 2x2 binned data
+  - fixed error the sky subtraction only fitting half-way across the chips
+
+
+
+Cosmos 2.02-p3-b3 - released 4-12-06
+  adjust-map.c:
+  - updated the clipping algorithm such that:
+    (1) lines culled out of the fit are not permanently culled from
+        subsequent iterations (we were losing lines off the ends of the
+        spectra that satisfied the fit of those subsequent iterations)
+    (2) when there are >5 lines we use a STDEV = 1.49*MAD
+  - added output file for STDEV values for each slit
+  - added plotting of spacial and wavelength fits to postscript file
+
+  defineobs:
+  - added IMACS_grism_150 to the list of grisms available in f/2
+
+  Sflats.c:
+  - fixed bad pixel map for 2x2 binned data
+  - fixed error with chips 1-4 with 2x2 binned data, the normalized flats
+    stretched only half-way across the chips
+
+  extract-2dspec.c:
+  - fixed field rotation
+
+
+
+Cosmos 2.02-p3 - released 2-7-06
+  - spectral-map modified to support tilted slits
+  - documentation of sumspec updated
+  - bugfix to handling of flat files in process-2spec
+  - small adjustments to chip positions in SITE2.dewdef
+  - bugfix in mosaic positions in apertures, spectral-lines,spectral-map
+  - correct extract-2dspec for chip offset in normal orientation IMACS spectra.
+    Add additional option for adjusting individual spectrum offsets
+  - correct Sflats for normalization error when multiple flat files
+  - modify include directory and Makefile to force fitsio.h and fitsio2.h to
+    be local versions. documentation on building COSMOS modified
+  - dewoff file for SC150g_NS added
+  - sumspec modified to improve CR rejection
+
+
+
+Cosmos 2.02-p2 - released 1-20-06
+  - correct bug in extract-2dspec when alignment method set to "none"
+  - change web pages for extract-2dspec and map-spectra to emphasize need to
+    map alignment holes if stars are to be used in extract-2dspec alignment
+    step
+  - bug fix to process-2spec
+  - correct bug in extract-2dspec affecting slit position of spectra for IMACS
+    Normal orientation
+  - correct omission of extract-2dspec from Makefile.Mac
+
+
+
+Cosmos 2.02-p1 - released 1-17-06
+  - correct bug in viewspectra affecting reading of parameter files
+  - add check to Sflats and subsky for incorrect bad pixel locations in
+    badpix files
+  - add check to subsky for bad map files
+  - error in cosmos2-setup corrected
+  - errors in process-2spec corrected
+  - dewoff file for SC600g_NS added
+  - SITE2.badpix added
+  - web page for installation updated to include patches
+
+
+
+Cosmos 2.02 - released 1-16-06
+  - revisions to process-2spec, sumspec.par, cosmos2-setup
+
+
+
+Cosmos 2.0 - released 8-3-05
+  Parameter files:
+  - the parameter file directory may now be located anywhere. Its location is 
+    specified by an environment variable COSMOS_PAR_DIR.
+  - The parameter files of some programs have changed, with new and renamed 
+    parameters.
+
+  map files and dewar definition files:
+  - now include several additional items used by some programs.
+  - addition of a new "dewar" SITE2, which describes the IMACS dewar after the 
+    change of chip 6 on August 1, 2005.
+
+  adjust-map:
+  - if the order of a fit is set to a negative number, no correction is made to
+    that fit.
+  - diagnostic mode in which fits are plotted.
+  - fit iterations with exclusion of outlying points
+
+  defineobs:
+  - new parameter added to specify instrument
+
+  extract-2dspec:
+  - wavelength limits default to those defined in map file if set to zero in
+    parameter file
+  - option of not subtracting shuffled region in nod&shuffle data
+  - option of extracting in logarithmic intervals of wavelength
+  - interactive fitting for displacement of objects along slits
+
+  map-spectra:
+  - option of mapping alignment holes as well as slits
+  - name of wavelength limits changed in parameter file to conform to those
+    used by other programs
+  - fit orders hard-wired into program rather than user selected
+
+  process-2spec:
+  - prompts for bad pixel file used by Sflats and subsky
+
+  Sflats:
+  - wavelength limits default to those defined in map file if set to zero in 
+    parameter file
+  - uses standard dewar-specific and/or optional user-defined bad pixel map
+  - cosmic ray rejection eliminated (promised but never implemented in version 
+    1.x)
+  - option of generated shuffled flats for nod&shuffle data
+
+  spectral-lines, spectral-map:
+  - if line list file is a number, it is treated as a single wavelength line 
+    list
+  - add option of outputting position of object, or positions of slit ends 
+    rather than slit center
+
+  stitch:
+  - new program to combine LDSS3 files in multi-amplifier readout into one image
+
+  subsky:
+  - wavelength limits default to those defined in map file if set to zero in 
+    parameter file
+  - add option of 2-dimensional spline fits
+  - uses standard dewar-specific and/or optional user-defined bad pixel map
+  - add parameter for ignoring ends of slits
+
+  viewspectra:
+  - additional way to set contrast of spectrum image window
+  - added button for writing out 1-d spectrum
+  - options for viewing nod&shuffle data
+
+  Several new programs are on the way:
+  - A program to generate bad pixel files including areas contaminated by zero 
+    and second order grism spectra
+  - A program to allow spectrophotometric calibration of all slits using 
+    observations of a standard star, either through one aperture or through the 
+    center slit
+
+  Bug fixes include:
+  - error in map-spectra in calculation of slit curvature for slits with 
+    off-center objects
+  - incorrect handling of ends of slits in subsky
+  - various minor bug-fixes
+
+
+
+Cosmos 1.06 - released 9-1-04
+  - viewspectra replaces view-1dspec, view-2dspec with enhanced features
+  - 2-d spectra pipeline scripting program process-2dspec added
+  - biasflat modified to handle new FITS headers
+  - cookbook added to documentation
+  - gains adjusted in biasflat parameter file
+  - minor bug fixes
+
+
+
+Cosmos 1.04 - released 7-15-04
+  - Well, extract isn't perfectly satisfactory, so an alternate method of 
+    extracting, combining, and CR cleaning multiple spectral frames devised.
+    - subsky and extract-2dspec modified to output pixel value errors
+    - extract-2dspec calculates mean offset in object positions to improve 
+      combining frames
+    - cosmic ray cleaning added to sumspec
+  - additional features added to view-2dspec
+  - numerous bugs found in handling of normal (as opposed to nod&shuffle) mode
+  - programs modified to handle changes to IMACS FITS headers
+  - miscellaneous minor fixes
+
+
+
+Cosmos 1.02 - released 5-1-04
+  - Sflats modified to better handle bad pixels, columns
+  - bug fixes
+
+
+
+Cosmos 1.00 - released 3-28-04
+  - extract, the general CR-cleaning, frame combining, and extraction program,
+    is now installed. It replaces extract-2dspec.
+  - biasflat changed to pass through more header information
+  - view-1dspec, 1-d version of view-2dspec added
+  - bug fixes to programs and installation scripts
+
+
+
+Cosmos 0.90 - released 2-8-04 
+  - programs added:
+    - imcombine8
+    - display8
+    - sumspec
+    - Sflats
+  - name changed: align-dewar is now called align-mask
+  - adjust-map now allows one to interpolate between two arc exposures
+  - slit numbers in map-spectra now start with 1 rather than 0
+  - tweaks to chip positions in SITE.dewdef
+  - many small changes and bug fixes
+
+

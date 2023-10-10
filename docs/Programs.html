@@ -1,0 +1,293 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=us-ascii">
+<meta name=Generator content="Microsoft Word 15 (filtered)">
+<title>Programs</title>
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Courier;
+	panose-1:2 0 5 0 0 0 0 0 0 0;}
+@font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;}
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+h1
+	{mso-style-link:"Heading 1 Char";
+	margin-right:0in;
+	margin-left:0in;
+	font-size:24.0pt;
+	font-family:"Times New Roman",serif;
+	font-weight:bold;}
+h3
+	{mso-style-link:"Heading 3 Char";
+	margin-right:0in;
+	margin-left:0in;
+	font-size:13.5pt;
+	font-family:"Times New Roman",serif;
+	font-weight:bold;}
+p.MsoHeader, li.MsoHeader, div.MsoHeader
+	{mso-style-link:"Header Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+p.MsoFooter, li.MsoFooter, div.MsoFooter
+	{mso-style-link:"Footer Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p
+	{margin-right:0in;
+	margin-left:0in;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+code
+	{font-family:"Courier New";}
+pre
+	{mso-style-link:"HTML Preformatted Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:10.0pt;
+	font-family:"Courier New";}
+p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+p.MsoListParagraphCxSpFirst, li.MsoListParagraphCxSpFirst, div.MsoListParagraphCxSpFirst
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+p.MsoListParagraphCxSpMiddle, li.MsoListParagraphCxSpMiddle, div.MsoListParagraphCxSpMiddle
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+p.MsoListParagraphCxSpLast, li.MsoListParagraphCxSpLast, div.MsoListParagraphCxSpLast
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+span.Heading1Char
+	{mso-style-name:"Heading 1 Char";
+	mso-style-link:"Heading 1";
+	font-family:"Calibri Light",sans-serif;
+	color:#2F5496;}
+span.Heading3Char
+	{mso-style-name:"Heading 3 Char";
+	mso-style-link:"Heading 3";
+	font-family:"Calibri Light",sans-serif;
+	color:#1F3763;}
+span.HTMLPreformattedChar
+	{mso-style-name:"HTML Preformatted Char";
+	mso-style-link:"HTML Preformatted";
+	font-family:Courier;}
+p.msonormal0, li.msonormal0, div.msonormal0
+	{mso-style-name:msonormal;
+	margin-right:0in;
+	margin-left:0in;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+span.HeaderChar
+	{mso-style-name:"Header Char";
+	mso-style-link:Header;
+	font-family:"Times New Roman",serif;}
+span.FooterChar
+	{mso-style-name:"Footer Char";
+	mso-style-link:Footer;
+	font-family:"Times New Roman",serif;}
+.MsoChpDefault
+	{font-size:10.0pt;}
+ /* Page Definitions */
+ @page WordSection1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+	{page:WordSection1;}
+ /* List Definitions */
+ ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+
+<meta name=Title content=Programs>
+<meta name=Keywords content="">
+</head>
+
+<body bgcolor=white lang=EN-US link=blue vlink=purple>
+
+<div class=WordSection1>
+
+<p><a href="index.html">Back to Table of Contents</a></p>
+
+<h1>Programs</h1>
+
+<h3>Introduction</h3>
+
+<p>COSMOS includes programs to (1) calculate and adjust the mapping between the
+CCD focal plane and the science plane (wavelength vs slit coordinate) (2) reduce
+data, (3) provide quick-look capabilities, as well as some utility programs.
+Some programs are intended to replace common IRAF routines, so that one need
+not run IRAF simultaneously while doing reductions. All programs have a
+specified set of input parameters which may be entered on the command line. If
+more than one input parameter is required, they are, with a few noted
+exceptions,&nbsp; denoted by flags and may&nbsp; be entered in any order.
+Alternately, if no parameters are specified, many programs will prompt for
+them. Most programs have an associated parameter file, whose name is <code><span
+style='font-size:10.0pt'>program.par</span></code>. The parameters in each
+parameter file are listed with each program. Parameter files may be edited with
+the utility program <b>editpar</b>. Parameter files must be located in the
+directory specified by the environment variable COSMOS_PAR_DIR. Image files
+must be located in the directory specified by the environment variable
+COSMOS_IMAGE_DIR</p>
+
+<h3>Utility Programs</h3>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="defineobs.html">defineobs</a>&nbsp;&nbsp;define
+     or edit an observation definition file </li>
+ <li class=MsoNormal><a href="editpar.html">editpar</a>&nbsp;&nbsp;edit
+     program parameter files </li>
+ <li class=MsoNormal><a href="fitsheader.html">fitsheader</a>
+     print out the header of a fits file</li>
+</ul>
+
+<h3>Setup/Alignment Programs</h3>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="align-mask.html">align-mask</a>&nbsp;&nbsp;adjust
+     dewar offset files using mask image </li>
+ <li class=MsoNormal><a href="adjust-mask.html">adjust-mask</a>&nbsp;&nbsp;make
+     manual corrections to dewar offset files </li>
+</ul>
+
+<h3>Mapping Programs</h3>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="map-spectra.html">map-spectra</a>&nbsp;&nbsp;construct
+     spectral maps </li>
+ <li class=MsoNormal><a href="adjust-map.html">adjust-map</a>&nbsp;&nbsp;use
+     a comparison arc to adjust spectral maps </li>
+</ul>
+
+<h3>Display/Visualization Programs</h3>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="display.html">display</a> display
+     image frames in a ds9 window</li>
+ <li class=MsoNormal><a href="mark-slits.html">mark-slits</a>
+     use an observation definition or map file to mark predicted slit locations
+     on a ds9 display</li>
+ <li class=MsoNormal><a href="whatsthat.html">whatsthat</a>
+     identifies slit and wavelength within a spectral image in a ds9 window</li>
+</ul>
+
+<p class=MsoNormal style='margin-left:.25in'>the following programs are now
+seldom needed but are retained for completeness</p>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="mosaic.html">mosaic</a>&nbsp;&nbsp;combine
+     all 8 CCD frames into one image </li>
+ <li class=MsoNormal><a href="spectral-lines.html">spectral-lines</a>&nbsp;&nbsp;calculate
+     positions of spectral lines using observation definition file </li>
+ <li class=MsoNormal><a href="spectral-map.html">spectral-map</a>&nbsp;&nbsp;calculate
+     positions of spectral lines using a spectral map </li>
+ <li class=MsoNormal><a href="apertures.html">apertures</a>
+     calculate positions of apertures using observation definition file</li>
+</ul>
+
+<h3>Reduction Programs</h3>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="badorders.html">badorders</a>&nbsp;&nbsp;constructs
+     bad pixel maps to mask zero and higher order spectra </li>
+ <li class=MsoNormal><a href="biasflat.html">biasflat</a>&nbsp;&nbsp;do
+     bias and flat field corrections of frames </li>
+ <li class=MsoNormal><a href="extract-spec.html">extract-spec&nbsp;&nbsp;</a>extract
+     1-d or 2-d spectra from one or a set of 8 frames, with optional cosmic ray
+     rejection </li>
+ <li class=MsoNormal><a href="1dspec.html">1dspec</a> perform
+     1-d optimal extraction on a set of 2-d spectra</li>
+ <li class=MsoNormal><a href="process-spec.html">process-spec</a>&nbsp;&nbsp;spectral
+     reduction pipeline </li>
+ <li class=MsoNormal><a href="Sflats.html">Sflats</a>&nbsp;&nbsp;
+     construct a spectroscopic flat field frame </li>
+ <li class=MsoNormal><a href="spec2big.html">spec2big</a>&nbsp;&nbsp;converts
+     extracted spectra from extensions format to equispec format </li>
+ <li class=MsoNormal><a href="stitch.html">stitch</a>&nbsp;&nbsp;combine
+     multiple LDSS3 FITS files into one file </li>
+ <li class=MsoNormal><a href="subsky.html">subsky</a>&nbsp;&nbsp;subtract
+     sky from spectral frame </li>
+ <li class=MsoNormal><a href="sumspec.html">sumspec</a>&nbsp;&nbsp;sum
+     spectral files, with optional cosmic ray rejection </li>
+</ul>
+
+<h3>Quick Look and Analysis Programs</h3>
+
+<ul type=disc>
+ <li class=MsoNormal><a href="quick-list.html">quick-list</a>&nbsp;&nbsp;produce
+     a short slit list for quick-look reductions </li>
+ <li class=MsoNormal><a href="viewspectra.html">viewspectra</a>&nbsp;&nbsp;view
+     and analyze 1-d or 2-d spectra </li>
+</ul>
+
+<p class=MsoNormal><b><span style='font-size:14.0pt'>Shortcut aliases</span></b></p>
+
+<p class=MsoListParagraphCxSpFirst style='text-indent:-.25in'><span
+style='font-family:Symbol'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><b>scd </b><i><span style='font-size:11.0pt;font-family:"Courier New"'>directory_name</span></i>:&nbsp;&nbsp;&nbsp;
+alias for:&nbsp;&nbsp; <span style='font-size:11.0pt;font-family:"Courier New"'>setenv
+COSMOS_IMAGE_DIR <i>directory_name</i></span></p>
+
+<p class=MsoListParagraphCxSpMiddle style='text-indent:-.25in'><span
+style='font-family:Symbol'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><b>lcd:&nbsp;&nbsp;&nbsp; </b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alias
+for:&nbsp;&nbsp; <span style='font-size:11.0pt;font-family:"Courier New"'>ls
+$COSMOS_IMAGE_DIR</span></p>
+
+<p class=MsoListParagraphCxSpLast><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p><a href="How.html">Next: Using the Software</a></p>
+
+<p><a href="index.html">Back to Table of Contents</a></p>
+
+</div>
+
+</body>
+
+</html>

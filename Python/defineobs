@@ -1,0 +1,906 @@
+#!/usr/bin/python
+#
+# DEFINEOBS
+# Version of 01 Jan 2018
+#
+from Tkinter import *
+from astropy.io import fits
+import tkFont
+import tkFileDialog
+import tkMessageBox
+import ttk
+import sys
+import os
+
+
+## Constants
+
+backgd='Gainsboro'
+fontsize=11
+curdir = os.getcwd()
+
+modeval ={'Direct' : 'DIRECT',
+	 'Spectroscopic' : 'SPEC',
+	 'long f/4': 'LONG',
+	 'short f/2': 'SHORT'}
+graval ={'150 line': 'IMACS_150A',
+	 '300 line': 'IMACS_300A',
+	 '600 line': 'IMACS_600A',
+	 '1200 line': 'IMACS_1200A',
+	 'MOE': 'MOE'}
+grival ={'150 line': 'IMACS_grism_150',
+	 '200 line': 'IMACS_grism_200',
+	 '300 line': 'IMACS_grism_300',
+	 '300 line red': 'IMACS_grism_300R',
+	 '600 line': 'IMACS_grism_600'}
+lgrval ={'low': 'LDSS3_low',
+	 'med blue': 'LDSS3_med_blue',
+	 'med red': 'LDSS3_med_red',
+	 'high blue': 'LDSS3_high_blue',
+	 'VPH red': 'LDSS3_VPHred',
+	 'VPH blue': 'LDSS3_VPHblue',
+	 'VPH all': 'LDSS3_VPHall'}
+label ={'DIRECT': 'Direct',
+	 'SPEC': 'Spectroscopic',
+	 'SHORT': 'short f/2',
+	 'LONG': 'long f/4',
+	 'IMACS_150A': '150 line',
+	 'IMACS_300A': '300 line',
+	 'IMACS_600A': '600 line',
+	 'IMACS_1200A': '1200 line',
+	 'MOE': 'MOE',
+	 'IMACS_grism_150': '150 line',
+	 'IMACS_grism_200': '200 line',
+	 'IMACS_grism_300': '300 line',
+	 'IMACS_grism_300R': '300 line red',
+	 'IMACS_grism_600': '600 line',
+	 'IMACS_direct_grism' : '',
+	 'IMACS_direct': '',
+	 'LDSS_direct_grism': '',
+	 'LDSS_low': 'low',
+	 'LDSS_med_blue' : 'med blue',
+	 'LDSS_med_red': 'med red',
+	 'LDSS_high_blue': 'high blue',
+	 'LDSS_high_red' : 'high red',
+	 'LDSS3_low': 'low',
+	 'LDSS3_med_blue': 'med blue',
+	 'LDSS3_med_red': 'med red',
+	 'LDSS3_high_blue': 'high blue',
+	 'LDSS3_VPHred': 'VPH red',
+	 'LDSS3_VPHblue': 'VPH blue',
+	 'LDSS3_VPHall': 'VPH all'}
+fitslabel={ 'Gra-300': '300 line',
+			'Gra-600': '600 line',
+			'Gra-150': '150 line',
+			'Gra-1200': '1200 line',
+			'Gri-150-18.8': '150 line',
+			'Gri-150-10.8': '150 line',
+			'Gri-200-15.0':'200 line',
+			'Gri-300-17.5': '300 line',
+			'Gri-300-26.7': '300 line red',
+			'VPH-Blue': 'VPH blue',
+			'VPH-Red': 'VPH red',
+			'VPH-All': 'VPH all',
+			'Old_Med_Red': 'med red',
+			'Old_Med_Blue': 'med blue',
+			'Old_High_Blue': 'high blue',
+			'Old_Low': 'low'}
+
+monthlist= {"Jan":1, "Feb":2, "Mar":3, "Apr":4, "May":5, "Jun":6, "Jul":7,
+				   "Aug":8, "Sep":9, "Oct":10, "Nov":11, "Dec":12, "":0}
+months=[None]*12
+for key in monthlist:
+	i=monthlist[key]-1
+	months[i]=key
+years=(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,
+			2016,2017,2018,2019,2020)
+year=0
+instruments=("IMACS","LDSS3")
+cameras=("short f/2","long f/4")
+grisms=("150 line", "200 line", "300 line", "300 line red")
+gratings=("150 line", "300 line", "600 line", "1200 line")
+lgrisms=("low", "medium blue", "medium red", "high blue",
+			  "VPH blue", "VPH red", "VPH all")
+modes=("Direct","Spectroscopic")
+grlabel=""
+short=0
+changes=0
+
+
+## Functions
+
+def openfile():
+	global obsfile, changes, hasname, comname
+	obspar={}
+	if not comname:
+		obsfile=tkFileDialog.askopenfilename(initialdir=curdir,title="Select File",filetypes=[('obsdef','*.obsdef'),('obsdef backup','*.obsdef%')])
+	mn=("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+	comname=0
+	infile=open(obsfile,'r')
+	if(obsfile.find("obsdef") < 0):
+		obsfile += ".obsdef"
+	jj=obsfile.rfind("/")
+	titlename = "defineobs   " +obsfile[jj+1:]
+	mw.title(titlename)
+	for line in infile:
+		those=line.split()
+		par=those[0]
+		if len(those)>1:
+			value=those[1]
+		else:
+			value=''
+		obspar[par]=value
+	infile.close()
+	if "DATE" in obspar:
+		dd=obspar["DATE"]
+		imonth,yr = dd.split('/')
+		month.set(mn[int(imonth)-1])
+		year.set(yr)
+	instru=obspar["INSTRUMENT"]
+	instrument.set(instru)
+	setinstr(instrument);
+	m=obspar["MASK"]
+	m=m.replace(".smf", "", 1)
+	m=m.replace(".SMF", "", 1)
+	mask.set(m)
+	d=obspar["DEWOFF"]
+	d=d.replace(".dewoff", "", 1)
+	d=d.replace(".DEWOFF", "", 1)
+	dewoff.set(d)
+	if instru == "IMACS":
+		cmm=label[obspar["CAMERA"]]
+	else:
+		cmm=''
+	camera.set(cmm)
+	setcam(camera)
+	mode.set(label[obspar["MODE"]])
+	setmode(mode)
+	gra=obspar["GRATING"]
+	if gra.find("_NS") >=0:
+		NS.set(1)
+		gra=gra.replace("_NS","",1)
+	if gra.find("MOE2") >=0:
+		gra=gra.replace("MOE2","MOE",1)
+	grr=label[gra]
+	if cmm == "short f/2":
+		grism.set(grr)
+	if instru == "LDSS3":
+		lgrism.set(grr)
+	else:
+		grating.set(grr)
+	grord.set(obspar["GR_ORDER"])
+	grang.set(obspar["GR_ANGLE"])
+	if  "D_ALIGNROT" in obspar:
+		alignrot.set(obspar["D_ALIGNROT"])
+	else:
+		alignrot.set("0")
+		obspar["D_ALIGNROT"]="0"
+	changes=0
+
+def saveasfile():
+	global obsfile, hasname
+	obsfile=tkFileDialog.asksaveasfilename(initialdir=curdir,title="Select File",filetypes=[('obsdef','*.obsdef'),('obsdef backup','*.obsdef%')])
+	jj=obsfile.rfind("/")
+	hasname=1
+	titlename = "defineobs   " +obsfile[jj+1:]
+	mw.title(titlename)
+	savefile()
+
+
+def savefile():
+	global obsfile, changes, hasname
+	if not hasname:
+		saveasfile()
+	_mask = mask.get()
+	_mode=mode.get()
+	_instrument = instrument.get()
+	_dewoff = dewoff.get()
+	_month = monthlist[month.get()]
+	_year = year.get()
+	i=1
+	obspar={}
+	if _mask == ""  or  _mode == "" or _instrument == "" or _dewoff == "" or _month == 0 or _year == "":
+		tkMessageBox.showwarning("Warning","You must supply values for all  parameters")
+		return
+	dateval=float(_year)+float(_month)/100.
+	obspar["DATE"] = str(_month) + "/" + _year
+	obspar["INSTRUMENT"] = _instrument
+	obspar["MASK"]= _mask
+	obspar["MODE"]= modeval[_mode]
+	obspar["DEWOFF"]=_dewoff
+
+	obspar["GR_ANGLE"]=0
+	obspar["GR_ORDER"]=0
+	obspar["D_ALIGNROT"]=0
+	if _mode == "Spectroscopic":
+		_grorder=grord.get()
+		_alignrot= alignrot.get()
+		_grang=grang.get()
+		if _grorder == "" or _alignrot == "":
+			tkMessageBox.showwarning("Warning","You must supply values for all parameters")
+			return
+		obspar["GR_ORDER"]= _grorder
+		obspar["D_ALIGNROT"]= _alignrot
+		obspar["GR_ANGLE"]=_grang
+
+#IMACS
+	if _instrument == "IMACS":
+		_camera=camera.get()
+		if _camera == "":
+			tkMessageBox.showwarning("Warning","You must supply values for all parameters")
+			return
+		#Camera versions
+
+		obspar["CAMERA"]= modeval[_camera]
+
+		#Dewar Names
+		if dateval<2005.08:
+			obspar["DEWAR"]="SITE"#before chip6 change
+		else:
+			obspar["DEWAR"]="SITE2"#after chip6 change
+		if dateval>2008.03:
+			obspar["DEWAR"]="E2V"#after new short dewar installed
+		if  not short and dateval>2011.10:
+			obspar["DEWAR"]="Mos3"#after new long dewar installed
+		if dateval>2018.0:#dewars swapped
+			if short:
+				obspar["DEWAR"]="Mos3"
+			else:
+				obspar["DEWAR"]="E2V"
+
+		#Distortion Maps:
+		if short:
+			if dateval<2008.0:
+				obspar["DISTORTION"]="Short1"
+			else:
+				obspar["DISTORTION"]="Short2"
+			if dateval>2009.10:
+				obspar["DISTORTION"]="Short3"
+			if dateval>2010.04:
+				obspar["DISTORTION"]="Short4"
+			if dateval>2011.06:
+				obspar["DISTORTION"]="Short5"
+			if dateval>2013.02:
+				obspar["DISTORTION"]="Short6"
+			if dateval>2015.03:
+				obspar["DISTORTION"]="Short7"
+		else:
+			obspar["DISTORTION"]=""
+
+		if short:
+			if _mode == "Direct":
+				obspar["GRATING"]="IMACS_direct_grism"
+			else:
+				_grism=grism.get()
+				if(grism == ""):
+					tkMessageBox.showwarning("Warning","You must supply values for all parameters")
+				g=grival[_grism]
+				if dateval>2007.05 and NS.get()>0: #after N&S grism rotation implemented
+					g += "_NS"
+				obspar["GRATING"]= g
+				obspar["GR_ANGLE"]="0"
+		else:
+			if _mode == "Direct":
+				obspar["GRATING"]= "IMACS_direct"
+			else:
+				_grang=grang.get()
+				_grating=grating.get()
+				if _grang == "" or _grating == "":
+					tkMessageBox.showwarning("Warning","You must supply values for all parameters")
+				obspar["GR_ANGLE"]= _grang
+				obspar["GRATING"]= graval[_grating]
+
+#LDSS
+	else:
+		obspar["CAMERA"]=""
+		if _mode == "Direct":
+			obspar["GRATING"]="LDSS_direct_grism"
+		else:
+			_lgrism=lgrism.get()
+			if _lgrism == "":
+				tkMessageBox.showwarning("Warning","You must supply values for all parameters")
+			obspar["GRATING"]= lgrval[_lgrism]
+		if dateval>2014.03:
+			obspar["DEWAR"]="LDSS3C"
+		else:
+			obspar["DEWAR"]="LDSS3"
+
+	if(obsfile.find("obsdef") < 0):
+		obsfile += ".obsdef"
+	if os.path.exists(obsfile):
+		obsbak=obsfile+"%"
+		os.rename(obsfile, obsbak)
+	outfile=open(obsfile,'w')
+	for key in obspar:
+		outfile.write("{:15} {:15}\n" .format(key,obspar[key]))
+	outfile.close()
+	changes=0
+
+def cleardata():
+	mw.title('defineobs')
+	global obsfile, changes, hasname
+	imacs=0
+	short=0
+	spec=0
+	specfile.set("")
+	Apply.set(0)
+	hasname=0
+	comname=0
+	obsfile=""
+	month.set("")
+	year.set("")
+	instrument.set("")
+	mask.set("")
+	dewoff.set("")
+	camera.set("")
+	mode.set("")
+	grism.set("")
+	grating.set("")
+	grord.set("")
+	grang.set("")
+	alignrot.set("")
+	cam_state(0)
+	disp_state(0)
+	grang_state(0)
+	grord_state(0)
+	alignrot_state(0)
+	CamBox.grid_remove()
+	GriBox.grid_remove()
+	GraBox.grid_remove()
+	changes=0
+
+def exitprogram():
+	global changes
+	if(changes == 0):
+		os._exit(0)
+	else:
+		ans = tkMessageBox.askokcancel("","Exit without saving?")
+		if(ans):
+			os._exit(0)
+
+def infofile(specfile):
+	specf=specfile.get()
+	infofile=os.environ['COSMOS_IMAGE_DIR'] +'/' + specf + 'c1.fits'
+	if(not(os.path.isfile(infofile))):
+		infofile=os.environ['COSMOS_IMAGE_DIR'] +'/' + specf + '.fits'
+		if(not(os.path.isfile(infofile))):
+			tkMessageBox.showwarning("Error","Cannot find file")
+			return
+	cleardata()
+	specfile.set(specf)
+	Apply.set(1)
+	hdu=fits.open(infofile)
+	night=hdu[0].header["NIGHT"]
+	nicht=re.sub(r"\d+(\D+\d+)",r"\1",night)
+	mon=re.sub(r"\d+","",nicht)
+	yer=re.sub(r"\D+","",nicht)
+	month.set(mon)
+	year.set(yer)
+	instrmnt=hdu[0].header["INSTRUME"]
+	if("IMACS" in instrmnt):
+		imacs=1
+		instrument.set("IMACS")
+		setinstr(instrument)
+		if("Short" in instrmnt):
+			short=1
+			cmm=label["SHORT"]
+		else:
+			short=0
+			cmm=label["LONG"]
+		camera.set(cmm)
+		setcam(camera)
+		slitmask=hdu[0].header["SLITMASK"]
+		disper=hdu[0].header["DISPERSR"]
+		dwri=hdu[0].header["DEWARORI"]
+		normdew=  1 if ("Normal" in dwri) else 0
+	if("LDSS3" in instrmnt):
+		imacs=0
+		instrument.set("LDSS3")
+		slitmask=hdu[0].header["APERTURE"]
+		disper=hdu[0].header["GRISM"]
+		normdew=1
+		short=1
+	mask.set(slitmask)
+
+	if(imacs):
+		dwff= "SC" if short else "LC"
+	else:
+		dwff="L3"
+	#Direct
+	if("Imaging"  in disper or "Open" in disper):
+		spec=0
+		mode.set("Direct")
+		dwff = dwff + "direct_"
+	#Spectroscopic
+	else:
+		spec=1
+		mode.set("Spectroscopic")
+		nsfh=hdu[0].header["NSHUFFLE"]
+		if(nsfh):
+			Nshuffle=1
+		setmode(mode)
+		if imacs:
+			if not '-' in disper:
+				dwff=''
+			else:
+				vls=disper.split('-')
+				dwff = dwff + vls[1] + '_'
+		else:
+			if 'VPH' in disper:
+				vls=disper.split('-')
+				dwff = dwff + 'VPH_'  + re.sub(r'\w*\-(\w?).*',r'\1',disper) + '_'
+			else:
+				vls=disper.split('_')
+				dwff = dwff + vls[1] + vls[2] + '_'
+		#Long Camera
+		if(short==0):
+			disper=re.sub(r'(\D+\d+).+',r'\1',disper)
+			grr=fitslabel[disper] if disper in fitslabel else ''
+			_grang=hdu[0].header["G-ANGLE"]
+			grang.set(_grang)
+			grating.set(grr)
+		#Short Camera or LDSS3
+		else:
+			grr=fitslabel[disper] if disper in fitslabel else ''
+			if(imacs):
+				grism.set(grr)
+			else:
+				lgrism.set(grr)
+		alignrot.set("0")
+	dwff = dwff + 'N' if normdew else dwff + 'NS'
+	dewoff.set(dwff)
+
+def setinstr(instrument):
+	notechange(1,1,1)
+	int=instrument.get()
+	mask.set("")
+	dewoff.set("")
+	camera.set("")
+	mode.set("")
+	grism.set("")
+	grating.set("")
+	grord.set("")
+	grang.set("")
+	alignrot.set("")
+	if int == "IMACS":
+		cam_state(1)
+		CamBox.grid()
+	else:
+		cam_state(0)
+		CamBox.grid_remove()
+	disp_state(0)
+	grang_state(0)
+	grord_state(0)
+	alignrot_state(0)
+
+def setcam(camera):
+	notechange(1,1,1)
+	global short
+	cam=camera.get()
+	mode.set("")
+	grism.set("")
+	grating.set("")
+	grord.set("")
+	grang.set("")
+	alignrot.set("")
+	disp_state(0)
+	grang_state(0)
+	grord_state(0)
+	alignrot_state(0)
+	if cam == "short f/2":
+		short=1
+	else:
+		short=0
+
+def setmode(mode):
+	notechange(1,1,1)
+	mod=mode.get()
+	int=instrument.get()
+	cam=camera.get()
+	grism.set("")
+	grating.set("")
+	grord.set("")
+	grang.set("")
+	alignrot.set("")
+	if mod == "Direct":
+		disp_state(0)
+		grang_state(0)
+		grord_state(0)
+		alignrot_state(0)
+	else:
+		disp_state(1)
+		grord_state(1)
+		alignrot_state(1)
+		if int == "IMACS":
+			if cam == "short f/2":
+				grlabel.set("Grism")
+				grordlabel.set("Grism Order")
+				gralignlabel.set("Grism Misalignment")
+				GriBox.grid()
+				GraBox.grid_remove()
+			else:
+				grlabel.set("Grating")
+				grordlabel.set("Grating Order")
+				gralignlabel.set("Grating Misalignment")
+				GriBox.grid_remove()
+				GraBox.grid()
+				grang_state(1)
+		else:
+			grlabel.set("Grism")
+			grordlabel.set("Grism Order")
+			gralignlabel.set("Grism Misalignment")
+			GriBox.grid_remove()
+			GraBox.grid_remove()
+			LGriBox.grid()
+
+def cam_state(state):
+	st="disabled"
+	fg="lightgrey"
+	if state>0:
+		st="normal"
+		fg="black"
+	CamLabel.configure(foreground=fg)
+	CamBox.configure(foreground=fg, state=st)
+
+def mode_state(state):
+	st="disabled"
+	fg="lightgrey"
+	if state>0:
+		st="normal"
+		fg="black"
+	ModeLabel.configure(foreground=fg)
+	ModeBox.configure(foreground=fg, state=st)
+
+def disp_state(state):
+	st="disabled"
+	fg="lightgrey"
+	fgg="lightgrey"
+	NSBut.grid_remove()
+	GraBox.grid_remove()
+	GriBox.grid_remove()
+	LGriBox.grid_remove()
+	if state>0:
+		st="normal"
+		fg="black"
+		fgg="lightgrey"
+		if short:
+			NSBut.grid()
+			fgg="black"
+	GriBox.grid_remove()
+	DispLabel.configure(foreground=fg)
+	NSLabel.configure(foreground=fgg)
+	GriBox.configure(foreground=fg, state=st)
+	LGriBox.configure(foreground=fg, state=st)
+	GraBox.configure(foreground=fg, state=st)
+	NSBut.configure(foreground=fgg)
+
+def grang_state(state):
+	st="disabled"
+	fg="lightgrey"
+	GrangEntry.grid_remove()
+	if state>0:
+		st="normal"
+		fg="black"
+		GrangEntry.grid()
+	GrangLabel.configure(foreground=fg)
+
+def grord_state(state):
+	st="disabled"
+	fg="lightgrey"
+	GrordEntry.grid_remove()
+	if state>0:
+		st="normal"
+		fg="black"
+		GrordEntry.grid()
+	GrordLabel.configure(foreground=fg)
+
+def alignrot_state(state):
+	st="disabled"
+	fg="lightgrey"
+	AlignrotEntry.grid_remove()
+	if state>0:
+		st="normal"
+		fg="black"
+		AlignrotEntry.grid()
+	AlignrotLabel.configure(foreground=fg)
+
+def notechange(a,b,c):
+	global changes
+	changes=1
+
+
+mw = Tk()
+myfont=tkFont.Font(family='helvatica',weight='normal',size=fontsize)
+mw.title('defineobs')
+mw.configure(background=backgd)
+Label(mw, text="defineobs",font=myfont)
+global obsfile, hasname, comname
+hasname=0
+comname=0
+
+## Menu Bar
+
+menubar = Menu(mw)
+mw.config(menu=menubar)
+filemenu = Menu(menubar,font=myfont)
+menubar.add_cascade(label="File", menu=filemenu,font=myfont)
+filemenu.add_command(label="New", command=cleardata,font=myfont)
+filemenu.add_command(label="Open...", command=openfile,font=myfont)
+filemenu.add_command(label="Save", command=savefile,font=myfont)
+filemenu.add_command(label="Save As...", command=saveasfile,font=myfont)
+filemenu.add_command(label="Exit", command=exitprogram,font=myfont)
+
+## FileOption Frame
+
+FileOptionFrame=Frame(mw,background=backgd)
+FileOptionFrame.grid(padx=15,pady=15,row=0)
+FileFrame = Frame(FileOptionFrame,background=backgd,width=490,height=30)
+FileFrame.grid(padx=0,pady=7)
+FileFrame.grid_propagate(0)
+FileLabel=Label(FileFrame,text="Spectrum File",background=backgd,font=myfont,
+				   anchor=W, width=20)
+FileLabel.grid(row=0,column=0)
+
+specfile=StringVar()
+specfile.set("")
+specfile.trace('w',notechange)
+FileEntry=Entry(FileFrame,textvariable=specfile,width=16,font=myfont,
+                background='white',bd=2)
+FileEntry.grid(pady=0,row=0, column=1)
+
+ApplyLabel=Label(FileFrame,text="",background=backgd,font=
+				myfont, foreground="black",anchor=W,width=2)
+ApplyLabel.grid(row=0,column=2)
+
+Apply=IntVar()
+#Apply.trace('w',notechange)
+ApplyBut=Button(FileFrame,background=backgd,text="Apply",
+                     command=lambda: infofile(specfile))
+ApplyBut.grid(row=0,column=3)
+
+Bar=ttk.Separator(mw)
+Bar.grid(sticky=ttk.Tkinter.E+ttk.Tkinter.W,row=1)
+
+## Input Values Frame
+
+ValueFrame=Frame(mw,background=backgd)
+ValueFrame.grid(padx=15,pady=15,row=2)
+
+DaFrame=Frame(ValueFrame,background=backgd,width=490,height=3)
+DaFrame.grid(padx=0,pady=7)
+DaFrame.grid_propagate(0)
+
+
+## Date Frame
+
+DateFrame=Frame(ValueFrame,background=backgd,width=490,height=30)
+DateFrame.grid(padx=0,pady=7)
+DateFrame.grid_propagate(0)
+
+DateLabel=Label(DateFrame,text="Observation Date",background=backgd,font=
+				  myfont, anchor=W,width=20)
+DateLabel.grid(row=0,column=0)
+
+month=StringVar()
+month.set("")
+month.trace('w',notechange)
+DateBox1=OptionMenu(DateFrame, month, *months)
+DateBox1.config(font=myfont,background='white', width=7)
+DateBox1.nametowidget(DateBox1.menuname).config(font=myfont)
+DateBox1.grid(row=0, column=1)
+
+year=StringVar()
+year.set("")
+year.trace('w',notechange)
+DateBox2=OptionMenu(DateFrame, year, *years)
+DateBox2.config(font=myfont,background='white', width=8)
+DateBox2.grid(row=0,column=2)
+
+## Instrument Frame
+
+InstFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+InstFrame.grid(padx=0,pady=7)
+InstFrame.grid_propagate(0)
+
+InstLabel=Label(InstFrame,text="Instrument",background=backgd,font=
+				myfont, anchor=W,width=25)
+InstLabel.grid(row=0,column=0)
+
+instrument=StringVar()
+instrument.set("")
+InstBox=OptionMenu(InstFrame, instrument, *instruments,command=lambda x: setinstr(instrument))
+InstBox.config(font=myfont,background='white',width=10)
+InstBox.grid(row=0,column=1)
+
+## Mask Frame
+
+MaskFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+MaskFrame.grid(padx=0,pady=7)
+MaskFrame.grid_propagate(0)
+
+MaskLabel=Label(MaskFrame,text="Mask",background=backgd,font=myfont,
+				   anchor=W, width=20)
+MaskLabel.grid(row=0,column=0)
+
+mask=StringVar()
+mask.set("")
+mask.trace('w',notechange)
+MaskEntry=Entry(MaskFrame,textvariable=mask,width=20,font=myfont, background='white',bd=2)
+MaskEntry.grid(pady=0,row=0, column=1)
+
+## Dewar Offset Frame
+
+DewoffFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+DewoffFrame.grid(padx=0,pady=7)
+DewoffFrame.grid_propagate(0)
+
+DewoffLabel=Label(DewoffFrame,text="Dewar Offset File",background=backgd,
+					 font=myfont, anchor=W, width=20)
+DewoffLabel.grid(row=0,column=0)
+
+dewoff=StringVar()
+dewoff.set("")
+dewoff.trace('w',notechange)
+DewoffEntry=Entry(DewoffFrame,textvariable=dewoff,width=20,font=myfont,
+			  background='white', bd=2)
+DewoffEntry.grid(pady=0,row=0, column=1)
+
+## Camera Frame
+
+CamFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+CamFrame.grid(padx=0,pady=7)
+CamFrame.grid_propagate(0)
+
+CamLabel=Label(CamFrame,text="Camera",background=backgd,font=
+				myfont, anchor=W,width=20, foreground="lightgrey")
+CamLabel.grid(row=0,column=0)
+
+camera=StringVar()
+camera.set("")
+CamBox=OptionMenu(CamFrame, camera, *cameras,command=lambda x: setcam(camera))
+CamBox.config(font=myfont,background="white",width=10)
+CamBox.grid(row=0,column=1)
+CamBox.grid_remove()
+
+
+## Mode Frame
+
+ModeFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+ModeFrame.grid(padx=0,pady=7)
+ModeFrame.grid_propagate(0)
+
+ModeLabel=Label(ModeFrame,text="Mode",background=backgd,font=
+				myfont, anchor=W,width=20)
+ModeLabel.grid(row=0,column=0)
+
+mode=StringVar()
+mode.set("")
+ModeBox=OptionMenu(ModeFrame, mode, *modes,command=lambda x: setmode(mode))
+ModeBox.config(font=myfont,background='white',width=15, disabledforeground="white")
+ModeBox.grid(row=0,column=1)
+
+## Disperser Frame
+
+DispFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+DispFrame.grid(padx=0,pady=7)
+DispFrame.grid_propagate(0)
+
+grlabel=StringVar()
+grlabel.set("Disperser")
+DispLabel=Label(DispFrame,textvariable=grlabel,background=backgd,font=
+				myfont, anchor=W,width=20, foreground="lightgrey")
+DispLabel.grid(row=0,column=0)
+
+NSLabel=Label(DispFrame,text="       N&S",background=backgd,font=
+				myfont, foreground="lightgrey",anchor=W,width=8)
+NSLabel.grid(row=0,column=2)
+
+NS=IntVar()
+NS.trace('w',notechange)
+NSBut=Checkbutton(DispFrame,variable=NS,background=backgd)
+NSBut.grid(row=0,column=3)
+NSBut.grid_remove()
+
+
+Blank=Label(DispFrame,text="            ",background=backgd,font=myfont,           width=14)
+Blank.grid(row=0,column=1)
+Blank.grid_remove()
+
+#IMACS Grism
+grism=StringVar()
+grism.set("")
+grism.trace('w',notechange)
+GriBox=OptionMenu(DispFrame, grism, *grisms)
+GriBox.config(font=myfont,background='white',width=13)
+GriBox.grid(row=0,column=1)
+GriBox.grid_remove()
+
+#IMACS Grating
+grating=StringVar()
+grating.set("")
+grating.trace('w',notechange)
+GraBox=OptionMenu(DispFrame, grating, *gratings)
+GraBox.config(font=myfont,background='white',width=13)
+GraBox.grid(row=0,column=1)
+GraBox.grid_remove()
+
+#LDSS3 Girsm
+lgrism=StringVar()
+lgrism.set("")
+lgrism.trace('w',notechange)
+LGriBox=OptionMenu(DispFrame, lgrism, *lgrisms)
+LGriBox.config(font=myfont,background='white',width=13)
+LGriBox.grid(row=0,column=1)
+LGriBox.grid_remove()
+
+## Grating Order Frame
+
+GrordFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+GrordFrame.grid(padx=0,pady=7)
+GrordFrame.grid_propagate(0)
+
+grordlabel=StringVar()
+grordlabel.set("Disperser Order")
+GrordLabel=Label(GrordFrame,textvariable=grordlabel,background=backgd,font=
+				myfont, anchor=W,width=20, foreground="lightgrey")
+GrordLabel.grid(row=0,column=0)
+
+
+grord=StringVar()
+grord.set("")
+grord.trace('w',notechange)
+GrordEntry=Entry(GrordFrame,textvariable=grord,width=2,font=myfont,
+			  background='white',bd=2)
+GrordEntry.grid(pady=0,row=0, column=1)
+GrordEntry.grid_remove()
+
+## Grating Angle Frame
+
+GrangFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+GrangFrame.grid(padx=0,pady=7)
+GrangFrame.grid_propagate(0)
+
+granglabel=StringVar()
+granglabel.set("Disperser Angle")
+GrangLabel=Label(GrangFrame,textvariable=granglabel,background=backgd,font=
+				myfont, anchor=W,width=20, foreground="lightgrey")
+GrangLabel.grid(row=0,column=0)
+
+grang=StringVar()
+grang.set("")
+grang.trace('w',notechange)
+GrangEntry=Entry(GrangFrame,textvariable=grang,width=6,font=myfont,
+			  background='white',bd=2)
+GrangEntry.grid(pady=0,row=0, column=1)
+GrangEntry.grid_remove()
+
+## Disperser Misalignment Frame
+
+AlignrotFrame = Frame(ValueFrame,background=backgd,width=490,height=30)
+AlignrotFrame.grid(padx=0,pady=7)
+AlignrotFrame.grid_propagate(0)
+
+gralignlabel=StringVar()
+gralignlabel.set("Disperser Misalignment")
+AlignrotLabel=Label(AlignrotFrame,textvariable=gralignlabel,background=backgd,
+					 font=myfont, anchor=W,width=20,foreground="lightgrey")
+AlignrotLabel.grid(row=0,column=0)
+
+alignrot=StringVar()
+alignrot.set("")
+alignrot.trace('w',notechange)
+AlignrotEntry=Entry(AlignrotFrame,textvariable=alignrot,width=6,font=myfont,
+			  background='white', bd=2)
+AlignrotEntry.grid(pady=0,row=0, column=1)
+AlignrotEntry.grid_remove()
+
+#open input file if specified
+args=sys.argv[0:]
+if len(args)>1:
+	comname=1
+	hasname=1
+	obsfile=args[1] + '.obsdef'
+	openfile()
+
+
+mainloop()

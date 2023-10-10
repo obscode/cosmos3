@@ -1,0 +1,83 @@
+<html>
+<head>
+  <title>spec2big</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>spec2big</h1>
+<p>
+<b>spec2big</b> converts extracted spectra from extensions format to equispec format.
+</p>
+<br>
+
+<p>
+<table width=100%>
+<tr><td width="150px">USAGE<td><code>spec2big <i>framename</i></code>
+<tr><td>INPUT<td><code>framename_2spec.fits</code> are the set of image files to be combined
+<tr><td valign="top">OUTPUT<td>
+  <table width=100%>
+  <tr><td><code>framename_big.fits</code> is the spectral frame
+  <tr><td><code>framename_sig.fits</code> is the noise frame
+  </table>
+<tr><td valign="top">PARAMETERS<td>none
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+<b>spec2big</b> converts extracted spectra from extensions format to equispec format.  The spectra and noise are separated into two files.  Standard equispec header keywords are used for compatibility in programs such as IRAF.
+<p>
+The header of all the spectra contains the following parameters:
+<pre>
+N_SLITS  = number of slits extracted
+D_SLIT   = interval along slit, in arc seconds
+CRVAL1   = wavelength of first pixel
+CDELT1   = wavelength interval of pixels
+CRPIX1   = starting pixel
+EXPTIME  = total exposure time of the spectrum
+SHUFFLED = does data included shuffled region?
+NOD      = nod distance, in pixels (for N&S data)
+</pre>
+</p>
+
+<p>
+Each spectrum has the following header keywords:
+<pre>
+OBJxxx    = object name, as defined in the SMF file for the mask
+APNUMxxx  = additional aperture information
+CNTRLxxx  = the line in the 2-d spectrum centered on the object 
+CSECTxxxA = lower 2d spectra region in pixels
+CSECTxxxB = upper 2d spectra region in pixels
+</pre>
+</p>
+
+<p>
+Additional standard header keywords:
+<pre>
+WAT0_001
+WAT1_001
+WAT2_001
+WAT3_001
+WCSDIM
+DC-FLAG 
+CTYPE1
+LTM1_1
+CD1_1
+CTYPE2
+LTM2_2
+CD2_2
+CTYPE3
+LTM3_3
+CD3_3
+</pre>
+</p>
+<br>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>
+

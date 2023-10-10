@@ -1,0 +1,117 @@
+<html>
+<head>
+  <title>Frequently Asked Questions</title>
+</head>
+<body>
+<p><a href="index.html">Back to Table of Contents</a></p>
+
+<h1>Frequently Asked Questions</h1>
+
+<a href="#Compiling_COSMOS">Compiling COSMOS</a><br>
+<a href="#Running_COSMOS">Running COSMOS</a><br>
+<a href="#Within_IRAF">Within IRAF</a><br>
+<a href="#Other_Tips">Other Tips</a><br>
+<br>
+
+<a name="Compiling_COSMOS"></a><h3>Compiling COSMOS</h3>
+<ol>
+<li><h4>When I try to compile Tk Perl module, it fails and gives the error "make: *** No rule to make target '/System/Library/Perl/5.8.6/darwin-thread-multi-2level/CORE/config.h', needed by `Makefile'.  Stop."</h4>
+<p>
+You probably do not have Xcode developer tools.  You can get them from your OS X Install Disc or download them from the <a href="http://developer.apple.com/tools/xcode/">Apple Developer</a> website.
+</p>
+
+<li><h4>When I try to compile COSMOS, it fails and libpgplot.so gives an error "undefined reference to 'png_...'"</h4>
+<p>
+In this occurrence COSMOS is not finding libpng. You need to locate libpng and add its location to the Makefile for all the programs that give this error.
+
+It should resemble something similar to the following:
+<pre>
+f77 -o $@ -L$(BASE)/lib -L$(PGLIB) -L$(XLIB) -L$(FITSLIB) $@.o -lcfitsio\
+    -lX11 -lspline -lpgplot -lcpgplot -lcosmos /usr/lib/libpng.so.3
+</pre>
+</p>
+
+<li><h4>When I try to compile COSMOS, it fails and libcpgplot.a gives an error "undefined reference to `pg..._'"</h4>
+<p>
+In this case it was reported that by switching the linker order of -lpgplot and -lcpgplot in the Makefile will solve this problem.
+</p>
+
+<li><h4>When I try to compile COSMOS, it fails and gives an error "/usr/bin/ld: can't find file for: -limacs" (or -lspline)</h4>
+<p>
+In this case the library libimacs.a or libspline.a already exist.  The libraries can be found within Cosmos2/source/clardy or Cosmos2/source/dierckx. Simply deleting them and recompiling should solve the problem.
+</p>
+
+<li><h4>When I try to compile COSMOS on Mac OS X 10.6.x (Snow Leopard), it fails and gives the warning "ld: warning: in /.../.../Cosmos2-15/lib/libspline.a, file is not of required architecture"</h4>
+<p>
+Make sure you are using 64-bit C and FORTRAN compilers, which you can find and download at <a href="http://hpc.sourceforge.net">http://hpc.sourceforge.net</a>. You also need to make sure that the correct compilers will be used, by making sure its path is found in the PATH environmental variable before any other location where previous versions may be installed.
+</p>
+
+</ol>
+<br>
+
+<a name="Running_COSMOS"></a><h3>Running COSMOS</h3>
+<ol>
+<li><h4>When I try to run defineobs, it fails and gives an error "Can't locate Tk.pm in @INC"</h4>
+<p>
+You need to set the PERLLIB environmental variable to the location of Perl Modules.
+</p>
+
+<li><h4>When I try to run align-mask, it fails and gives an error "dyld: Library not loaded: lib..."</h4>
+<p>
+You probably need to add the path to the missing library to the environmental variables LD_LIBRARY_PATH and DYLD_LIBRARY_PATH.
+</p>
+
+<li><h4>When I try to run align-mask, it says "Average rotation angle =  nan  Reset angle?", when I type yes, it fails</h4>
+<p>
+<b>align-mask</b> is not finding the rotation of the dewar.  Try decreasing the <code>searchbox</code>, run <b>align-mask</b> again and type no for the response to this question. Repeat this a few times and it should eventually find a rotation.  If it does not, refer to <a href="Dewoff.html">Creating and Modifying Dewoff Files</a> to ensure your dewar orientation is correct.  If the dewar orientation is off by a large amount, <b>align-mask</b> may not converge and fail in this way.</p>
+<li><h4>When I try to run align-mask, it says "insufficient matches to do a fit" and it fails</h4>
+<p>
+It is possible that all the features are getting clipped out, so you may need to increase the <code>siglimit</code>.  Another possibility for this failure is that you may be using a feature that does not exist, or the distance is very large outside of the <code>searchbox</code>.  If all fails, one can manually tweak the offset, scale and rotation. Refer to <a href="Dewoff.html">Creating and Modifying Dewoff Files</a> on how to do this.
+</p>
+
+</p>
+<li><h4>When I try to run spectral-lines, it creates an empty file</h4>
+<p>
+</p>
+If you are using the IMACS Long Camera, be sure to specify an order and grating angle in defineobs.
+<li><h4>When I try to run adjust-map, it says "numerical error" and fails</h4>
+<p>
+Things to try when this occurs:
+<ul>
+<li>Change the <code>search_height</code> or <code>search_width</code> to a larger or smaller value.  Typically these parameters should be no less than 2 pixels and no greater than 14 pixels.
+<li>Increase the <code>siglimit</code>, it is possible that many features are getting clipped out.
+<li>Turn <code>histogram</code> mode off, sometimes there is so much confusion for an object that all the features get clipped out.
+<li>Turn <code>outlier-wt</code> mode off, the weighting can work unusually on some objects.
+</ul>
+</p>
+</ol>
+<br>
+
+<a name="Within_IRAF"></a><h3>Within IRAF</h3>
+<ol>
+<li><h4>When I try to run the task display8, it fails and gives an error "ERROR: Cannot open device (node!imtool..."</h4>
+<p>
+You need to first open DS9 within IRAF by typing <code>!ds9 &</code>.
+</p>
+<li><h4>When I try to run the task display8, it fails and gives an error "ERROR: Attempt to access undefined local variable `scale'."</h4>
+<p>
+You need to uncomment the line <code>#set  stdimage    = imt800</code> in your login.cl file, and change its value from "imt800" to something larger like "imt8192" to accommodate larger image files. For example, if you make the aforementioned changes, that line in your login.cl file should look like this:
+<pre>set    stdimage       = imt8192</pre>
+</p>
+</ol>
+<br>
+
+<a name="Other_Tips"></a><h3>Other Tips</h3>
+<ul>
+<li>If you have scisoft installed on your Mac computer, then it most likely will interfere with the installation and/or running of COSMOS. You would need to do the following in order to get it running properly:</li>
+<ol>
+<li>Disable the setup of scisoft in your startup file (e.g. ~/.cshrc, .profile), by commenting it out.
+<li>Install PGPLOT and CFITSIO yourself and make sure the locations of those are being included in the Makefile.
+<li>Compile COSMOS in a new window with a clean shell to insure that your environment is <i>scisoft-free.</i>
+</ol>
+<li>If you're installing COSMOS on Mac OS X 10.6.x (Snow Leopard), then you need to make sure you're using 64-bit C and Fortran compilers BEFORE installing dependencies, to insure that the library files are compatible with your system. See #5 above in "Compiling COSMOS" for more information on how to do this.
+</ul>
+  
+<p><a href="index.html">Back to Table of Contents</a></p>
+</body>
+</html>

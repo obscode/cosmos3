@@ -1,0 +1,891 @@
+# 		Optical definitions file
+#
+# Either "!" or "#" introduces a comment (to end of line)
+# An element section is introduced by a principal keyword; one of:
+#  TELESCOPE COLIMATOR FOCUSER REIMAGER SCOPE <focal length>
+#  GRATING GRISM <glass, angle; lines>
+#  ANGLE <degrees> (formerly <axis, degrees>)
+#  GLASS <refraction polynomial>
+#  DETECTOR <size, mm> <pixels> <vigneting>
+#  EGRISM  <lead_angle lead_glass gr_angle gr_den trail_glass trail_angle>
+#
+#  Each of these has its characteristic data following, in a form
+#  dependent on the keyword itself.
+#
+#  The data following the keyword is:
+#    Element name
+#    Required values
+#
+#  Secondary lines are introduced by a "." character (not needed?)
+#  The "." on secondary lines is now optional; it is removed if present.
+#
+#  Secondary keywords modify the last principal element; such things as:
+#    FOCCURV <diopters>
+#    SCALE  either mm/radian or radian/mm for focusing or colimating items
+#    FIELD  <descriptor -- R/D/X/Y and size>
+#    TMOD | RMOD | WMOD <polynomial>
+#  These are followed by values defined by keyword
+#  NOTE -- use of the secondary keyword SCALE overrides any item specified
+#   as a focal length.  Other secondary keywords will similarly override
+#   things specified as additional fields following a primary keyword.
+#
+#  Secondary keyword LINES is optional following a GRATING or GRISM
+#  entry and contains lines/mm; otherwise this data is at the end of
+#  the GRATING or GRISM line.
+#
+#  Secondary keyword ALIGNROT is optional following any disperser entry
+#  and contains a rotational alignment angle in degrees.
+#
+#  The extended grism type has angles in degrees, density in lines
+#  per millimeter, and glass names.  A name of "null" for a glass 
+#  indicates that prism component is effectively absent.  A grating 
+#  density of zero indicates the absence of the grating element.
+#
+#  For explanation of the <polynomial> distortions, see the file
+#  ~/imacs/maskgen/optics/polysto.otl.  In general, the distortions
+#  are dealt with as result *= (1.0 + C0*y^0 + C1*y^1 + C2*y^2 + ...);
+#  where y is X*2 or wavl^-2 or temp.
+#
+#  Special element is "INSTRUMENT" which is a definition of a
+#  set of elements.
+#  The data is an arbitrarily long list of element names or keywords
+#  Acceptable keywords are: TELESCOPE COLIMATOR FOCUSER REIMAGER SCOPE
+#		GRATING GRISM ANGLE DETECTOR
+#  and all keywords must be resolved into a real element for use.
+#  Currently, only GRATING GRISM  are correctly parsed.
+#  Will be using CAMERA as synonym for FOCUSER
+#
+#  All entries in the INSTRUMENT list must follow on the same line;
+#  This is because they can be the same as keywords, and may be names which
+#  are not otherwise recognized.
+#
+#
+#
+!
+!     + - - - - - - - - - - - +
+!     |   IMACS definitions   |
+!     + - - - - - - - - - - - +
+!
+!  + - - - - - - +
+!  |  Telescope  |
+!  + - - - - - - +
+!
+TELESCOPE Magellan 71089.0
+ FOCCURV 0 0.8090615
+## fake.. . TMOD 0 2.682e-8
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Telescope Scale
+!
+!  Units:	mm/radian
+!  Temperature:	8C
+!  Wavelength:	0.55 microns
+!  Field Angle:	0 arcmin
+!
+!  The scale was computed using the original optical design parameters,
+!  and not the as-builts (since the ADC has not, at this time, been built).
+!
+!  Brian Sutin  2002-05-20
+!
+!
+! SCALE 7.10899938e+04
+!
+!  2004-June-4
+!  Information from Dressler, Oemler and Kelson asserts that the
+!  scale in arc-seconds / millimeter is measured as 0.9993 of what
+!  the above scale would yield.  This results in a slightly longer
+!  focal length, as follows:
+!
+! SCALE  71139.8
+!
+!  2004-June-14
+!  Further expeirence has indicated that a better value for the
+!  focal length would be this:
+!
+SCALE  71161.1
+!
+!  It is anticipated that further measurements will be able to refine
+!  this scale to a better value.
+!  Also, in a future refinement, the atmospheric (differential) refraction
+!  will be separately computed, and the scale will be adjusted to be
+!  that of the telescope alone, without the refraction effect.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+! Please Note:
+!  There are (will be) two different telescope focal length and
+!  distortion specifications.  One will refer to the Magellan Telescope
+!  without the atmospheric dispersion compensator.  The other will 
+!  include the dispersion compensator.  The IMACS instrument is designed
+!  to always use the compensator, while the LDSS-2 instrument is designed
+!  to not use it.  These telescope configurations will be known by
+!  different names.
+!
+!  Also, it is expected that the second Magellan telescope will have
+!  slightly different focus and distortion parameters, so there will be
+!  another telescope configuration for it, when it is fully installed.
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Telescope Distortion
+!
+!  Units In:	radians^2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns
+!
+!  Brian Sutin  2002-05-20
+!
+!
+RMOD 2 0.0 2.67982953e+02 3.68633337e+05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Telescope Wavelength Dependence
+!
+!  Units In:	microns^-2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns at center
+!
+!  Note: the entire polynomial is multiplied by lambda^2 (or 1/x)
+!
+!  Brian Sutin  2002-05-21
+!
+WMOD 3 -8.90150538e-06 -4.66081555e-06 3.40769320e-06 -3.48315960e-07
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Telescope Temperature Dependence
+!
+!  Units In:	degrees C
+!  Temperature: 8C at center
+!  Wavelength:	0.55 microns
+!
+!  Brian Sutin  2002-05-21
+!
+TMOD 1 1.55108263e-07 -1.94048247e-08
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+#  During installation of IMACS, the Magellan telescope may be
+#  operated without the Atmospheric Dispersion Compensator (ADC),
+#  which significantly changes the telescope effective focal length
+#  and distortion parameters.
+#
+#  To allow for this possible operation, we define a version of the
+#  telescope without the ADC here.  This will NOT be the usual
+#  mode of operation, it is provided for support only.
+#
+#  Note that, even with the ADC installed, this instrument value may
+#  be needed for future data reduction, so it is kept here.  It is
+#  not used for mask making.
+#
+TELESCOPE MagNoADC 70918.3
+ FOCCURV 0 0.8090615
+# That focal curvature is a "guess", same as with ADC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Telescope Scale Without ADC and No Pullback
+!
+!  Units:       mm/radian
+!  Temperature: 8C
+!  Field Angle: 0 arcmin
+!
+!  Brian Sutin  2003-07-31
+!
+! SCALE 7.09182776e+04
+SCALE  71373.0  ! Temporary for ldss use
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Telescope Distortion Without ADC and No Pullback
+!
+!  Units In:    radians^2
+!  Temperature: 8C
+!
+!  Brian Sutin  2002-07-31
+!
+RMOD 2 0.0 1.75352765e+02 2.09007893e+05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+#
+#
+!  + - - - - - - +
+!  |  Colimator  |
+!  + - - - - - - +
+#
+#
+!
+COLIMATOR IMACS_col 1638.3
+ FOCCURV 0 -0.8090615
+ FIELD R 321.54
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Collimator Scale
+!
+!  Units:	mm/radian
+!  Temperature:	8C
+!  Wavelength:	0.55 microns
+!  Field Angle:	0 arcmin
+!
+!  Brian Sutin  2002-05-22
+!
+SCALE 6.10944999e-04
+#  Should be reciprocal? (1636.808553)
+#  And/Or it's really radian/mm ?
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Collimator Distortion
+!
+!  Units In:	mm^2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns
+!
+!  Brian Sutin  2002-05-22
+!
+RMOD 2 0.0 -1.73482826e-07 -2.33443886e-13
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Collimator Wavelength Dependence
+!
+!  Units In:	microns^-2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns at center
+!  Field Angle:	7.5 arcmin
+!
+!  Note: the entire polynomial is multiplied by lambda^2 (or 1/x)
+!
+!  Brian Sutin  2002-05-28
+!
+WMOD 3 4.23932511e-04 -7.12992982e-04 2.29784020e-04 -1.62884252e-05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Collimator Temperature Dependence
+!
+!  Units In:	degrees C
+!  Temperature: 8C at center
+!  Wavelength:	0.55 microns
+!  Field Angle:	7.5 arcmin
+!
+!  Brian Sutin  2002-05-28
+!
+TMOD 1 3.56913676e-04 -4.46225237e-05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+#
+#
+!  + - - - - - - - +
+!  |  Long Camera  |
+!  + - - - - - - - +
+#
+#
+!
+FOCUSER IMACS_long 641.8
+ FOCCURV 0 0.0
+ FIELD R 125.0
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Long Camera Scale
+!
+!  Units:	mm/radian
+!  Temperature:	8C
+!  Wavelength:	0.55 microns
+!  Field Angle:	0 arcmin
+!
+!  Brian Sutin  2002-05-24
+!
+SCALE 6.40993657e+02
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Long Camera Distortion
+!
+!  Units In:	mm^2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns
+!
+!  Brian Sutin  2002-05-24
+!
+# error = . RMOD 3 0.0 3.51494000e-01 -5.06451119e-01
+RMOD 2 0.0 3.51494000e-01 -5.06451119e-01
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Long Camera Wavelength Dependence
+!
+!  Units In:	microns^-2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns at center
+!
+!  Note: the entire polynomial is multiplied by lambda^2 (or 1/x)
+!
+!  Brian Sutin  2002-05-28
+!
+WMOD 3 -1.68638023e-03 2.05850032e-03 -6.72588738e-04 6.14129125e-05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Long Camera Temperature Dependence
+!
+!  Our current assumption is that we will correct thermal effects
+!  by moving the L05 element and refocusing.  Thus, the long camera
+!  model requires no thermal terms.
+!
+!  Brian Sutin  2002-05-24
+!
+TMOD 0 0.0
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+#
+#
+!  + - - - - - - - +
+!  | Short Camera  |
+!  + - - - - - - - +
+#
+#
+FOCUSER IMACS_short 355.6
+ FOCCURV 0 0.0
+ FIELD R 125.0
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Short Camera Scale
+!
+!  Units:	mm/radian
+!  Temperature:	8C
+!  Wavelength:	0.55 microns
+!  Field Angle:	0 arcmin
+!
+!  Brian Sutin  2002-05-22
+!
+SCALE 3.55148487e+02
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Short Camera Distortion
+!
+!  Units In:	mm^2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns
+!
+!  Brian Sutin  2002-05-22
+!
+RMOD 2 0.0 2.78711536e-01 3.12884431e-01
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Short Camera Wavelength Dependence
+!
+!  Units In:	microns^-2
+!  Temperature: 8C
+!  Wavelength:	0.55 microns at center
+!  Field Angle:	7.5 arcmin at telescope
+!
+!  Note: the entire polynomial is multiplied by lambda^2 (or 1/x)
+!
+!  Brian Sutin  2002-05-28
+!
+WMOD 3 -1.11437897e-03 2.17379430e-03 -7.83277567e-04 6.88543592e-05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Short Camera Temperature Dependence
+!
+!  Units In:	degrees C
+!  Temperature: 8C at center
+!  Wavelength:	0.55 microns
+!  Field Angle:	7.5 arcmin at telescope
+!
+!  Brian Sutin  2002-05-28
+!
+TMOD 0 -1.00875439e-04 1.31117689e-05
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   IMACS Angle (for long camera)
+!
+!! ANGLE IMACS_angle 1 225.0
+! Used to be a polynomial; now just a constant
+ANGLE IMACS_angle  225.0
+!  This is the former CAMERA_ANGLE from IMACS optics code
+! ANGLE IMACS_angle  224.0
+!  Debug test of a slightly different angle...
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!    Gratings for IMACS
+!
+GRATING IMACS_150A 150.0
+ALIGNROT 0.0
+!
+GRATING IMACS_300A 300.0
+ALIGNROT 0.5
+!
+GRATING IMACS_600A 600.0
+ALIGNROT 0.2
+!
+GRATING IMACS_1200A 1200.0
+ALIGNROT 0.0
+!
+GRATING IMACS_direct 0.0
+# Make sure code for grating uses 0 lpmm as a simple mirror...
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   Grisms for IMACS
+!
+! .. Glass definitions
+!
+GLASS Fused_Silica  5 -9.5251763e-03 2.1045254e+00 8.5795589e-03 1.2770234e-04 -2.2841020e-06  1.2397250e-07 
+!
+GLASS  BSL7Y    5  -1.0082346e-02  2.2699882e+00  1.1067229e-02  3.8263836e-05  1.7794939e-05  -8.9762718e-07
+# (For grism 200)
+!
+GLASS  S-LAL12  5  -8.7787656e-03  2.7589457e+00  2.1173055e-02 -4.7262367e-04  9.6870749e-05  -4.0576545e-06
+# (For grism 300)
+!
+GLASS  PBH53W   5  -1.05551124e-02  3.25008969e+00  4.78517126e-02  3.23076820e-03  -1.59616205e-04  2.64226220e-05
+# (For grism 600)
+!
+GLASS  SBAL42  5  -9.71898076e-03  2.46783077e+00  1.37566633e-02  2.25905778e-04  3.65449767e-06 -2.90831130e-07
+# (For grism 150)
+!
+GLASS  PBL1YT  5  -8.40389601e-03  2.35045675e+00  1.57043674e-02  4.58760635e-04 -1.22025354e-05  1.99484800e-06
+# (For Grism 300R) From refraction table
+!
+GLASS  PBL1Y  5  -8.42070244e-03  2.35051247e+00  1.56648206e-02  4.69195535e-04 -1.33043757e-05  2.02936529e-06
+# (For Grism 300R) From visual Sellmeier coefficients
+!
+GLASS  PBL1YR  5  -8.80935177e-04  2.35026475e+00  1.59436229e-02  3.67333824e-04  1.63529515e-08  1.37058442e-06
+# (For Grism 300R) From I.R. Sellmeier coefficients
+
+!
+! .. Grism definitions
+!
+GRISM IMACS_grism_200  BSL7Y  15.0  200.0
+ALIGNROT  -0.2
+!
+GRISM IMACS_grism_300  S-LAL12  17.5  300.0
+ALIGNROT  -0.2
+!
+GRISM IMACS_grism_600  PBH53W  34.0  600.0
+ALIGNROT  0.0
+!
+GRISM IMACS_grism_150  SBAL42  10.8  150.0
+ALIGNROT  0.0
+!
+GRISM IMACS_grism_300R  PBL1Y  26.7  300.0
+ALIGNROT  -0.2
+!
+!Nod&Shuffle rotated grisms for new short camera configuration
+!
+GRISM IMACS_grism_200_NS  BSL7Y  15.0  200.0
+ALIGNROT  89.8
+!
+GRISM IMACS_grism_300_NS  S-LAL12  17.5  300.0
+ALIGNROT  89.8
+!
+GRISM IMACS_grism_600_NS  PBH53W  34.0  600.0
+ALIGNROT  90.0
+!
+GRISM IMACS_grism_150_NS  SBAL42  10.8  150.0
+ALIGNROT  90.0
+!
+GRISM IMACS_grism_300R_NS  PBL1Y  26.7  300.0
+ALIGNROT  89.8
+!
+!
+# Dummy definitions for testing...
+!
+GRISM IMACS_grism_1  Fused_Silica 17.666  300.0
+!
+!  Define a direct grism, mathematically - it's not there
+GLASS  Clear  1 0.0 1.0
+! GRISM IMACS_direct_grism  Clear 0.0 0.0
+EGRISM IMACS_direct_grism  0.0 null  0.0 0.0  null 0.0
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Echelle for IMACS  (Multi-Object Echelle == M.O.E.)
+!
+Echelle  MOE  Fused_Silica  245.0
+# First prism surface at 5.198, -9.358, -22.592
+# Second prism surface at 0.436, 9.566, 23.093
+# Grating normal at  -3.810, -12.350, 21.400 in -x,z,-y system
+# Grating groove is 158.131, -12.603, 20.877 in -x,z,-y system
+#  Prism1   0.20792 -0.37432 -0.90368
+#  Prism2   0.01744  0.38264  0.92372
+Prism1  0.22495105  -0.37287528  -0.9002006
+Prism2  0.01745241   0.38265148   0.9237388
+#Prism2  0.0040142465 -0.382680349 -0.923872089 latest
+  Gnormal  0.15240 -0.85600 -0.49400
+# The -Z direction on the normal causes reflection of beam.
+#  Gdispv   0.00297  0.50023 -0.86589 old
+#  Gdispv   0.00791148 0.50087621 -0.8654853 first attempt
+#  Gdispv   0.00642904 0.50068235 -0.8656072 interpol
+ Gdispv  0.00939392  0.50107007 -0.86535573
+# Positive orders going in positive Y direction here
+#  Lines  245.0
+  Lines  246.0
+# Tilt value is tilt of grating about ruling lines
+# with positive values in the direction of greater dispersion
+ GTilt 0.1
+
+!
+Echelle  MOE2 Fused_Silica  245.0
+Prism1  0.22495105  -0.37287528  -0.9002006
+Prism2  0.01745241   0.38265148   0.9237388
+#original values
+#Gnormal  0.14782913  -0.88130345  -0.44883268
+#Gdispv   0.00925875   0.45503214  -0.89042688
+#Lines  246.0
+#new values
+Gnormal  0.14782913  -0.88130345  -0.44883268
+Gdispv   0.01616277 0.45591099 -0.88987861
+Lines  245.5
+GTilt 0.1
+
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+DETECTOR IMACS_CCDL 125.0 8192 100.0
+! FIELD X 125.0 Y 125.0
+! PIXELS X 8192 Y 8192
+!
+! When used on the short camera, the IMACS detector
+! actually has a vignetting radius, as shown here...
+DETECTOR IMACS_CCDS 125.0 8192 82.0
+!
+!
+INSTRUMENT  IMACS_lc  IMACS_col GRATING IMACS_angle IMACS_long IMACS_CCDL
+INSTRUMENT  IMACS_sc  IMACS_col GRISM              IMACS_short IMACS_CCDS
+!
+! The IMACS instrument set-up's could be defined in a modular
+! fashion as follows:
+INSTRUMENT  IMACS_grating  GRATING  IMACS_angle IMACS_long IMACS_CCDL
+INSTRUMENT  IMACS_grism  GRISM  IMACS_short IMACS_CCDS
+INSTRUMENT  IMACS_lc2  IMACS_col IMACS_grating
+INSTRUMENT  IMACS_sc2  IMACS_col IMACS_grism
+!
+!  We can define the total IMACS direct instrument
+INSTRUMENT  IMACS_ld  IMACS_col IMACS_direct IMACS_angle IMACS_long IMACS_CCDL
+INSTRUMENT  IMACS_sd  IMACS_col IMACS_short IMACS_CCDS
+INSTRUMENT  IMACS_longcam  Magellan IMACS_ld
+INSTRUMENT  IMACS_shortcam  Magellan IMACS_sd
+!
+!  Test definitions for IMACS...
+#
+#
+!  Fake colimator to test coeficients
+!
+COLIMATOR IMACS_tcol 1638.3
+ FOCCURV 0 -0.8090615
+ FIELD R 321.54
+SCALE 6.10944999e-04
+! RMOD 2 0.0 -1.73482826e-07 -2.33443886e-13  ! Real coeficients
+! RMOD 2 0.0 -1.73482826e-07  2.33443886e-13
+RMOD   2 0.0 -1.73482826e-07 -2.33443886e-13
+! Changing sign of last term has less than 1 micron effect at 20 mm,
+!  and 60 microns effect at 200 mm input.
+WMOD 3 4.23932511e-04 -7.12992982e-04 2.29784020e-04 -1.62884252e-05
+TMOD 1 3.56913676e-04 -4.46225237e-05
+#
+#
+! Fake long camera to test coeficients
+!
+FOCUSER IMACS_tlong 641.8
+ FOCCURV 0 0.0
+ FIELD R 125.0
+SCALE 6.40993657e+02
+! RMOD 2 0.0 3.51494000e-01 -5.06451119e-01  ! Real coeficients
+! RMOD 2 0.0 3.51494000e-01 -10.06451119e-01
+RMOD   2 0.0 3.51494000e-01 -10.12902239e-01
+! Changing last term 50% has no effect at 20 mm, 9 microns at 200 mm.
+WMOD 3 -1.68638023e-03 2.05850032e-03 -6.72588738e-04 6.14129125e-05
+TMOD 0 0.0
+#
+#
+#
+INSTRUMENT  IMACS_xd  IMACS_tcol IMACS_direct IMACS_angle IMACS_tlong IMACS_CCDL
+#
+#  Test instrument specifications
+INSTRUMENT  test_col  Magellan  IMACS_col
+INSTRUMENT  test_sc   Magellan  IMACS_col  IMACS_short
+!
+!
+! (End of IMACS definitions)
+!
+!
+!
+!	+ - - - - - - - - - - - +
+!	|    Clay Telescope	|
+!	+ - - - - - - - - - - - +
+!
+!  The telescope is quite similar to the Baade telescope, however it
+!  has a different effective focal length, and no ADC.
+!
+TELESCOPE Mag2NoADC 71475.8
+! The presumed scale of the Clay telescope is used here...
+ FOCCURV 0 0.8090615
+#focal curvature is as for ADC since its the physical mask curvature that counts
+# But, that focal curvature is not used...
+! Using distortion from the Sutin values for the Bade telescope...
+ RMOD 2 0.0 1.75352765e+02 2.09007893e+05
+ TMOD 1 1.55108263e-07 -1.94048247e-08
+!
+!
+!  The Clay Telescope should be named "Magellan2", and that better
+!  name is introduced here, so it may be used in the software to
+!  identify the second telescope.  Currently a Synonym for Mag2NoADC
+!
+TELESCOPE Magellan2 71475.8
+ SCALE  71475.8
+! The scale was measured during the LDSS-3 commissioning run
+ FOCCURV 0 0.8090615
+! Focal Curvature is copied from Magellan currently, and is yet unused
+! Using distortion from the Sutin values for the Bade telescope...
+ RMOD 2 0.0 1.75352765e+02 2.09007893e+05
+ TMOD 1 1.55108263e-07 -1.94048247e-08
+!
+!
+!
+!	+ - - - - - - - - - - - +
+!	|   Glass definitions	|
+!	+ - - - - - - - - - - - +
+!
+GLASS Simple_glass 1 0.0 2.175625
+! Results in index of 1.475 for all wavelengths...
+!
+! From Sutin on 03/12-19:
+! The Schott coefficients for someones BK7 are:
+! 2.2718929e+00  -1.0108077e-02   1.0592509e-02   2.0816965e-04  -7.6472538e-06   4.9240991e-07
+!
+GLASS  BK7  5  -1.0108077e-02  2.2718929e+00  1.0592509e-02  2.0816965e-04 -7.6472538e-06  4.9240991e-07
+GLASS  SF10  5  -9.99054616e-03  2.87726057e+00  3.40011077e-02 1.89078179e-03 -1.00331202e-04  1.61497664e-05 
+
+!
+!
+!     + - - - - - - - - - - - +
+!     |   LDSS-2 definitions  |
+!     + - - - - - - - - - - - +
+!
+! Most of the LDSS-2 things are now obsolete.
+! Un-used LDSS-2 items are now commented out.
+! Later, they will be totally removed.
+!
+! We are using BK7 as a guess for the LDSS grisms.  We also make
+!  the angles agree with the non-deviated wavelengths.
+! See:  grisangl.c  KDC  03/12-24
+!
+!!GRISM LDSS_Low        BK7   9.155  150.0   ! 5500
+EGRISM LDSS_Low     0.0   BK7   9.155  150.0  null ! 5500
+!!GRISM LDSS_Med_blue   BK7  16.719  300.0   ! 5000
+!EGRISM LDSS_Med_blue    0.0  BK7  19.500  300.0  null
+EGRISM LDSS_Med_blue  0.0 BK7  16.719  300.0  null ! 5000
+!!GRISM LDSS_Med_red    BK7  20.404  300.0   ! 6000
+EGRISM LDSS_Med_red   0.0 BK7  20.404  300.0  null ! 6000
+!!GRISM LDSS_High_blue  BK7  36.125  600.0   ! 5000
+!EGRISM LDSS_High_blue 0.0 BK7  36.125  600.0  null ! 5000
+EGRISM LDSS_High_blue   0.0  BK7   30.200  600.0  null
+EGRISM LDSS_High_red   0.0  SF10  32.700  600.0  null
+! GRISM LDSS_direct_grism  Clear 0.0 0.0
+EGRISM LDSS_direct_grism  0.0 null  0.0 0.0  null 0.0
+! The direct grism is referred to, keep it.
+!
+DETECTOR  LDSS_CCD 49.15 4096 50.0
+! FIELD X 49.15 Y 49.15
+! PIXELS X 4096 Y 4096
+COLIMATOR LDSS2_col 770.0
+  scale  1.2987e-3
+ FIELD R 70.0
+FOCUSER LDSS2_cam 140.0
+  scale 140.0
+ RMOD 2 0.0 0.8755637190879 10.135446893793
+ FIELD R 70.0
+!!
+INSTRUMENT LDSS2    LDSS2_col  GRISM  LDSS2_cam  LDSS_CCD
+INSTRUMENT LDSS2_d  LDSS2_col  LDSS_direct_grism  LDSS2_cam  LDSS_CCD
+!! (End of LDSS-2 definitions
+!
+!
+!-- Section by Mike Gladders for new LDSS instrument;
+! some things here have been edited for style and substance.
+!  Line endings have been regularized;  some comments have
+!  been multi-lined, and others added.  Some extra commentary
+!  has been removed.
+!
+!     + - - - - - - - - - - - +
+!     |   LDSS-3 definitions  |
+!     + - - - - - - - - - - - +
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!     new parameters for ldss-3 follow below     !!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  Grisms from old LDSS2 instrument
+!
+!  The LDSS grisms are installed "upside down" with respect to the
+!  coordinate system and angle conventions used in IMACS.  To fix
+!  this, an alignment rotation value of 180 degrees is applied to
+!  each such grism, effectively rotating it by that amount about
+!  the central optical axis.  Another method is to use a negative
+!  prism angle, but that requires a negative grating order too,
+!  and that would upset some internal program logic.
+!
+! GRISM LDSS3_Low           BK7    9.600  150.0
+EGRISM LDSS3_Low        0.0   BK7    9.600  150.0  null
+ ALIGNROT  180.0
+! GRISM LDSS3_Med_blue      BK7   19.500  300.0
+EGRISM LDSS3_Med_blue    0.0  BK7   19.500  300.0  null
+ ALIGNROT  180.0
+! GRISM LDSS3_Med_red       BK7   19.500  300.0
+EGRISM LDSS3_Med_red    0.0   BK7   19.500  300.0  null
+ ALIGNROT  180.0
+! GRISM LDSS3_High_blue     BK7   30.200  600.0
+EGRISM LDSS3_High_blue   0.0  BK7   30.200  600.0  null
+ ALIGNROT  180.0
+!
+!  New grisms constructed for LDSS-3 instrument
+!
+GLASS  S-LAL7  5  -1.0513873e-2 2.6805890e0 1.7140176e-2 8.5811085e-5 2.1348318e-5 -7.4091988e-7
+!
+# EGRISM name <lead_angle lead_glass gr_angle gr_den trail_glass trail_angle>
+# -- angles refer to coordinate system, hence are absolute not relative.
+#
+EGRISM LDSS3_VPHred   -24.00 S-LAL7  0.00   665.0   S-LAL7  24.000
+ ALIGNROT  180.8
+EGRISM LDSS3_VPHblue  -24.00 S-LAL7  0.00  1090.0   S-LAL7  24.000
+ ALIGNROT  180.2
+EGRISM LDSS3_VPHall  -16.30 Fused_Silica 0.00 400.0 Fused_Silica 16.30
+ ALIGNROT  180.0
+# The alignment rotation values above are from Oemler,
+# e-mail of 2005/10-18; used for fitting actual data.
+# Also, lpmm for VPHred has been changed from 660 to 665.
+#
+#  End new 2-prism grisms.
+#
+DETECTOR  LDSS3_CCD 61.44 4096 60.0
+! FIELD X 61.44 Y 61.44
+! PIXELS X 4096 Y 4096
+!
+COLIMATOR LDSS3_COL 745.935
+ SCALE 1.339107836816E-03
+ RMOD 2 0.0 -1.488830086351E-06 -2.365672622993E-11
+ FIELD R 88.0
+ FOCCURV 0 -0.8090615
+!
+FOCUSER LDSS3_CAM 1.730757900129E+02
+ SCALE 1.730757900129E+02
+ RMOD 2 0.0 1.755637190879E-01 2.135446893793E+00
+ FIELD R 43.5
+ FOCCURV 0 0.0
+!
+INSTRUMENT LDSS3    LDSS3_COL  GRISM  LDSS3_CAM  LDSS3_CCD
+INSTRUMENT LDSS3_D  LDSS3_COL  LDSS_direct_grism  LDSS3_CAM  LDSS3_CCD
+!
+!
+! The following things are commented out as they are not needed:
+!GLASS ZNSE 5 -7.6994106E-02 6.6969872E+00 -1.1500977E+00 9.9814212E-01 -2.9215366E-01 3.2404304E-02
+!GLASS LASF35 5 -8.4792469E-03 3.8982310E+00 6.3832179E-02 3.7642731E-04 2.0796138E-04 4.3020500E-06
+!
+# The above glass and the following grisms are essentially fake;
+# Actual grism construction is not as the program currently supports.
+# Some new data may be provided later if needed.
+!
+!GRISM LDSS3_VPHred        ZNSE -20.200  629.9  
+! 8350 is undeviated wavelength, dispersion is 1.155 A/pix at that
+!GRISM LDSS3_VPHblue     LASF35 -28.591  965.9  !
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!     end of new params for ldss-3     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!
+!     + - - - - - - - - - - - - - +
+!     |   Old IMACS definitions   |
+!     |    for genopt testing.    |
+!     + - - - - - - - - - - - - - +
+!
+! TELESCOPE  Magellan_0  71500.00
+! TELESCOPE  Magellan_1  71089.0  # or 71090 ?
+! COLIMATOR  IMACS_base
+!   scale  6.060606e-4  ! Scale is 1.0 / (150.0 * 11.0)  radian/mm
+! GRATING    TEST_grating  300.0
+! GRISM      TEST_grism    Simple_glass 20.326 300.0
+! !
+! CAMERA     IMACS_long_0   641.8
+! CAMERA     IMACS_short_0  355.6
+! ! We don't put these in as "scale", since the program SHOULD
+! ! properly read the focal length in the primary keyword line...
+! !
+! INSTRUMENT  TEST_IMACS_long  IMACS_base TEST_grating IMACS_angle IMACS_long_0
+! INSTRUMENT  TEST_IMACS_short  IMACS_base  TEST_grism    IMACS_short_0
+!
+!
+!
+! --- End of Optical Definitions File ---
+#
+# All lines here down are totally bogus; this is to debug error checking...
+! grism  bad_grism  Nosuch_glass 15.5 169.75
+! ! Gives error for glass not present
+!   lines 330.0	# Should override the 169.75 junk
+!   axis 1	! Should report x axis
+! !
+! glass  bad_poly 3 0.0 2.175625 3.34e-4
+! glass  bad_poly2 1 0.0 2.175625 3.34e-4
+! ! Bad counts in polynomial do not kill data reading, are not checked.
+! !
+! instrument bogus_inst. IMACS_col bad_grism nosuch_element Magellan
+! ! Gives error on non-existing element
+! !
+! ! Remove these lines for real use

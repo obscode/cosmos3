@@ -1,0 +1,9 @@
+{
+"HLFWDTH": 2, 
+"NOD": 0, 
+"LINELIST": "linelistfile", 
+"SMOOTH": 10, 
+"LAMINT": 100.0, 
+"LAMBDA0": 4000.0, 
+"LAMBDA1": 9500.0
+}

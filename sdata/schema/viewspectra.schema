@@ -1,0 +1,28 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"viewspectra schema",
+"type":		"object",
+"properties":	{
+	"SMOOTH":  {
+		"type":  "integer",
+		"description":  "size of smoothing box in angstroms"},
+	"LINELIST":  {
+		"type":  "string",
+		"description":  "galaxy line list"},
+	"NOD":  {
+		"type":  "integer",
+		"description":  "telescope nod distance"},
+	"HLFWDTH":  {
+		"type":  "integer",
+		"description":  "halfheight of spectrum extraction box"},
+	"LAMINT":  {
+		"type":  "number",
+		"description":  "halfwidth of line exam window"},
+	"LAMBDA0":  {
+		"type":  "number",
+		"description":  "minimum wavelength to display"},
+	"LAMBDA1":  {
+		"type":  "number",
+		"description":  "maximum wavelength to display"}
+	}
+}

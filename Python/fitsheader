@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+from astropy.io import fits
+import sys
+import os
+
+if len(sys.argv)<2:
+    print "\nUsage imheader filename [hdu_index or \'info\'] \n"
+    sys.exit(1)
+im=sys.argv[1]
+image=os.environ['COSMOS_IMAGE_DIR'] +'/' + im + '.fits'
+if not(os.path.isfile(image)):
+    print "Unable to find file", image
+    sys.exit(1)
+hdu=fits.open(image)
+if len(sys.argv)>2:
+    what=sys.argv[2]
+    print "\n"
+    if what.isdigit():
+        hd=int(what)
+        header=hdu[hd].header
+        print repr(header)
+    else:
+        hdu.info()
+else:
+    header=hdu[0].header
+    print repr(header)

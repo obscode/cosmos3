@@ -1,0 +1,90 @@
+<html>
+<head>
+  <title>biasflat</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>biasflat</h1>
+<p>
+<b>biasflat</b> makes bias and flat-field corrections to all CCD frames of an image
+set. Depending on input, <b>biasflat</b> does one of several things:
+<ul>
+  <li>subtract bias level using column and row overscan regions
+  <li>subtract bias level using overscan regions and a bias image.
+  <li>subtract bias and divide by a flat-field image.
+</ul>
+The following input options may be used:
+<ul>
+  <li>input bias and/or flatfield frame names and the name of frames to process on the command line.
+  <li>input bias and/or flatfield frame names on the command line. <b>biasflat</b> will prompt for frames to be processed.
+  <li>input only frames to process on command lines; <b>biasflat</b> will use bias and flatfield frames listed in the parameter file.
+  <li>input nothing on command line. <b>biasflat</b> will prompt for all input.
+</ul>
+</p>
+
+<p>
+<b>biasflat</b> returns a new set of image files <code>framename_b_cn.fits</code>, for bias
+corrected frames, and <code>framename_f_cn.fits</code> for bias and flat corrected frames. 
+<b>biasflat</b> may be used for either direct of spectroscopic frames; if
+spectroscopic, the flat field frame should have been prepared with <b>Sflats</b>.
+</p>
+<br>
+
+
+<p>
+<table width=100%>
+<tr><td width="150px">USAGE<td><code>biasflat <i>[-b biasframe] [-f flatframe] [framename[s]]</i></code>
+<tr><td valign="top">INPUT<td>
+  <table width=100%>
+  <tr><td><code>biasframe</code> is the name of a bias frame set
+  <tr><td><code>flatframe</code> is the name of a flat frame set
+  <tr><td><code>framename[s]</code> is a set of image files to be corrected
+  </table>
+<tr><td>OUTPUT<td><code>framename_b_cn.fits</code>  or <code>framename_f_cn.fits</code> are sets of corrected frames
+<tr><td valign="top">PARAMETERS<td>
+  <table width=100%>
+  <tr><td><b>dewar</b><td>"SITE", "E2V", "Mos3", or "LDSS3"
+  <tr><td><b>speed</b><td>readout speed ("fast", "slow")
+  <!--tr><td width="100px"><b>gain1</b><td>relative gain (e-/adu) of IMACS chip 1
+  <tr><td><b>...</b><td>...
+  <tr><td><b>gain8</b><td>relative gain (e-/adu) of IMACS chip 8-->
+  <tr><td><b>flat_file</b><td>flat field frame to use (or blank or "none")
+  <tr><td><b>bias_file</b><td>bias frame to use (or blank or "none"
+  </table>
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+At a minimum, <b>biasflat</b> used the overscan regions to do bias corrections., and
+corrects, for IMACS, for the relative gains of the 8 chips. If a bias file is specified, either on the command line or in the parameter file, that image is first subtracted from the data frames, before a final overscan correction is made. If a flat field frame is specified, either on the command line or in the parameter file, the bias-corrected frame is divided by the flat field frame. The flat field frame must either (1) have already been bias-corrected, or (2) have the same bias levels and overscan regions as the other frames.
+</p>
+<br>
+
+<p>
+In the case of spectroscopic data, the flat field frame should have been
+prepared with <b>Sflats</b>, which properly normalizes each flat field spectrum.
+</p>
+<br>
+
+<p>
+As of COSMOS 2.19, the user can no longer edit the gain values in the parameter file.
+</p>
+
+<!--p>
+The gains inserted in the parameter file included with the COSMOS distribution
+represent the latest, best determinations for IMACS at the time the
+distribution was made, and should not be changed unless you have better or more
+recent information. The gains are not used for the LDSS3 data, which at this
+stage of the analysis have already been combined into one array.
+</p-->
+<br>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>
+

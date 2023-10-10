@@ -1,0 +1,21 @@
+# Gain values for IMACS cameras
+#
+# dewar readout_speed chip1 chip2 chip3 chip4 chip5 chip6 chip7 chip8
+#
+# SITe Mosaic1 camera at f/2 and f/4
+#
+SITE fast 0.84 0.89 0.87 1.18 0.74 0.93 0.92 0.84
+SITE slow 1.13 1.18 1.16 1.59 1.02 1.23 1.27 1.13
+SITE2 fast 0.84 0.89 0.87 1.18 0.74 0.93 0.92 0.84
+SITE2 slow 1.13 1.18 1.16 1.59 1.02 1.23 1.27 1.13
+#
+# E2V Mosaic2 camera at f/2
+#
+E2V fast 0.839 0.852 0.815 0.807 0.836 0.812 0.807 0.861
+E2V slow 0.483 0.489 0.467 0.472 0.480 0.472 0.470 0.496
+#
+# Mosaic3 camera at f/4
+#
+Mos3 fast 1.522 1.514 1.629 1.563 1.540 1.582 1.545 1.579
+Mos3 slow 0.854 0.856 0.927 0.886 0.885 0.905 0.870 0.876
+Mos3 snail 0.549 0.545 0.597 0.567 0.579 0.589 0.560 0.552

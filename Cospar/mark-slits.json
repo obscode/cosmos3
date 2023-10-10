@@ -1,0 +1,8 @@
+{
+"PLOTPOS": "ends", 
+"COLOR": "red", 
+"WHICHSLITS": "all", 
+"MARK": "circle", 
+"MARKSIZE": 10, 
+"LINEFILE": "HeNeAr.dat"
+}

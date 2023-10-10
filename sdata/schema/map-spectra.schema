@@ -1,0 +1,22 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"map-spectra schema",
+"type":		"object",
+"properties":	{
+	"MINLAMBDA":  {
+		"type":  "number",
+		"description":  "minimum wavelength"},
+	"MINPIXL":  {
+		"type":  "integer",
+		"description":  "minimum # pixels/spectrum"},
+	"MAXLAMBDA":  {
+		"type":  "number",
+		"description":  "maximum wavelength"},
+	"USE_HOLES":  {
+		"type":  "boolean",
+		"description":  "map holes as well as slits?"},
+	"USE_PRTLS":  {
+		"type":  "boolean",
+		"description":  "map partial slits?"}
+	}
+}

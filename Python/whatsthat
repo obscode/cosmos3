@@ -1,0 +1,131 @@
+#!/usr/bin/python
+
+# WHATSTHAT identifies spectra pointed to in a ds9 image display and
+#            determines wavelength of feature
+# Usage:     whatisthat mapfile
+# Version    6 Jan 2018
+
+import numpy as np
+from pyds9 import *
+import sys
+import os
+
+cind=np.array([[6,5,8,7],[1,2,3,4]])
+display=DS9()
+mapfile=sys.argv[1]
+
+#get BINNING
+
+lane=display.get('data image 1 1 2 1 yes')
+binx,biny=lane.split()
+if (binx != biny):
+    print "whatsthat does not support unequal x,y binning"
+    sys.exit(0)
+binning=int(binx)
+
+#read mapping data
+filename=mapfile + '.map'
+if not(os.path.isfile(filename)):
+    print "\nfile", filename, "cannot be found"
+    sys.exit()
+infile=open(filename,'r')
+nseg=np.array([0,0,0,0,0,0,0,0],dtype=np.int)
+nobj=0
+xmin=np.zeros((8,2000))
+xmax=np.zeros((8,2000))
+ymin=np.zeros((8,2000))
+ymax=np.zeros((8,2000))
+objnum=np.zeros((8,2000),dtype=np.int)
+slit=[];
+terms=[]
+object=[];
+nobj=-1;
+while(1):
+    line=infile.readline()
+    if('END' in line):
+        break
+    elif('Xdispersion' in line):
+        a,b,xdsp=line.split()
+        xdisper=int(xdsp)
+    elif('Fit orders' in line):
+        a,b,c,ordr,e,f,g,h=line.split()
+        order=int(ordr)
+        coefs=np.zeros((order+1,2000))
+    elif('Dewar' in line):
+        a,b,dewar,nchp=line.split()
+        xdim=2048/binning
+        ydim=4096/binning
+        if('LDSS3' in dewar):
+            xdim=ydim=4064/binning
+        nchips=int(nchp)
+        continue
+    elif('SLIT' in line):
+        a,slt,obj,b=line.split()
+        continue
+    elif('CHIP' in line):
+        nobj+=1
+        slit.append(slt);
+        object.append(obj);
+        a,nchp,b,c,d,e,f,g,xm,xx,ym,yx=line.split()
+        nchip=int(nchp)-1
+        xmin[nchip,nseg[nchip]]=float(xm)
+        xmax[nchip,nseg[nchip]]=float(xx)
+        ymin[nchip,nseg[nchip]]=float(ym)
+        ymax[nchip,nseg[nchip]]=float(yx)
+        objnum[nchip,nseg[nchip]]=nobj
+        nseg[nchip]+=1
+        infile.readline()
+        line=infile.readline()
+        terms=line.split()
+        n=0
+        for term in terms:
+            coefs[n,nobj] = float(term)
+            n+=1
+
+#loop for cursor position
+
+print "click or hit any key to query. q => quit\n"
+while(1):
+    found=0
+    line=display.get('imexam  any coordinate image')
+    if( 'q' in line or 'Q' in line):
+        sys.exit(0)
+    a,xp,yp=line.split()
+    xpos=float(xp)
+    ypos=float(yp)
+    if(nchips>1):
+        cx=int(xpos/xdim)
+        xpos = xpos % xdim
+        cy=int(ypos/ydim)
+        ypos = ypos % ydim
+        chip=cind[cy,cx]
+        if(chip<5):
+            ypos=ydim-ypos-1
+        else:
+            xpos=xdim-xpos-1
+    else:
+        chip=1
+    xpos *= binning
+    ypos *= binning
+    print chip, xpos, ypos
+    #find object
+    for i in xrange(nseg[chip-1]):
+        if(xpos>=xmin[chip-1,i] and xpos<=xmax[chip-1,i] and ypos>=ymin[chip-1,i]
+           and ypos<=ymax[chip-1,i]):
+           found=1
+           break;
+    if(found):
+        obj=objnum[chip-1,i]
+        lambd=0
+        n=0
+        for i in range(0,order+1):
+            if(xdisper):
+                pos=xpos
+            else:
+                pos=ypos
+            lambd+=coefs[i,obj]*pos**n
+            n+=1
+        val=lambd.astype('|S6')
+        print("Slit %4s  Object %10s     Wavelength %7.1f" % (slit[obj],object[obj],lambd))
+    else:
+        print "cannot identify feature"

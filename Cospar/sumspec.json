@@ -1,0 +1,7 @@
+{
+"BOTH": false, 
+"SIGLIMIT": 4.5, 
+"ITERATIONS": 2, 
+"CLEAN": true, 
+"GROW": 1
+}

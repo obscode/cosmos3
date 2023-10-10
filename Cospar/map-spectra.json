@@ -1,0 +1,7 @@
+{
+"USE_PRTLS": true, 
+"USE_HOLES": true, 
+"MINLAMBDA": 4800, 
+"MAXLAMBDA": 9800, 
+"MINPIXL": 40
+}

@@ -1,0 +1,247 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=us-ascii">
+<meta name=Generator content="Microsoft Word 15 (filtered)">
+<title>map-spectra</title>
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;}
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+h1
+	{mso-style-link:"Heading 1 Char";
+	margin-right:0in;
+	margin-left:0in;
+	font-size:24.0pt;
+	font-family:"Times New Roman",serif;
+	font-weight:bold;}
+h3
+	{mso-style-link:"Heading 3 Char";
+	margin-right:0in;
+	margin-left:0in;
+	font-size:13.5pt;
+	font-family:"Times New Roman",serif;
+	font-weight:bold;}
+p.MsoHeader, li.MsoHeader, div.MsoHeader
+	{mso-style-link:"Header Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+p.MsoFooter, li.MsoFooter, div.MsoFooter
+	{mso-style-link:"Footer Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p
+	{margin-right:0in;
+	margin-left:0in;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+code
+	{font-family:"Courier New";}
+span.Heading1Char
+	{mso-style-name:"Heading 1 Char";
+	mso-style-link:"Heading 1";
+	font-family:"Calibri Light",sans-serif;
+	color:#2F5496;}
+span.Heading3Char
+	{mso-style-name:"Heading 3 Char";
+	mso-style-link:"Heading 3";
+	font-family:"Calibri Light",sans-serif;
+	color:#1F3763;}
+p.msonormal0, li.msonormal0, div.msonormal0
+	{mso-style-name:msonormal;
+	margin-right:0in;
+	margin-left:0in;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+span.HeaderChar
+	{mso-style-name:"Header Char";
+	mso-style-link:Header;
+	font-family:"Times New Roman",serif;}
+span.FooterChar
+	{mso-style-name:"Footer Char";
+	mso-style-link:Footer;
+	font-family:"Times New Roman",serif;}
+.MsoChpDefault
+	{font-size:10.0pt;}
+ /* Page Definitions */
+ @page WordSection1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+	{page:WordSection1;}
+ /* List Definitions */
+ ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+
+<meta name=Title content=map-spectra>
+<meta name=Keywords content="">
+</head>
+
+<body bgcolor=white lang=EN-US link=blue vlink=purple>
+
+<div class=WordSection1>
+
+<p><a href="../docs/Programs.html">Back to Programs</a></p>
+
+<h1>map-spectra</h1>
+
+<p><b>map-spectra</b> calculates the mapping between science plane (wavelength
+and slit coordinate) and CCD focal plane for a given observation set. </p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<table class=MsoNormalTable border=0 cellpadding=0 width="100%"
+ style='width:100.0%'>
+ <tr>
+  <td width="19%" style='width:19.68%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>USAGE</p>
+  </td>
+  <td width="79%" style='width:79.56%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal><code><span style='font-size:11.0pt'>map-spectra <i>observset</i></span></code><span
+  style='font-size:11.0pt'> </span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="19%" style='width:19.68%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>INPUT</p>
+  </td>
+  <td width="79%" style='width:79.56%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal><code><span style='font-size:11.0pt'>observset.obsdef</span></code>
+  name of an existing observation definition file </p>
+  </td>
+ </tr>
+ <tr>
+  <td width="19%" style='width:19.68%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>OUTPUT</p>
+  </td>
+  <td width="79%" style='width:79.56%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal><code><span style='font-size:11.0pt'>observset.map</span></code>
+  is a file with the mapping information </p>
+  </td>
+ </tr>
+ <tr>
+  <td width="19%" valign=top style='width:19.68%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>PARAMETERS</p>
+  </td>
+  <td width="79%" style='width:79.56%;padding:.75pt .75pt .75pt .75pt'>
+  <table class=MsoNormalTable border=0 cellpadding=0>
+   <tr>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal><b>minlambda</b></p>
+    </td>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal>minimum wavelength </p>
+    </td>
+   </tr>
+   <tr>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal><b>maxlambda</b></p>
+    </td>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal>maximum wavelength </p>
+    </td>
+   </tr>
+   <tr>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal><b>minpixl</b></p>
+    </td>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal>minimum number of pixels of spectrum on a chip </p>
+    </td>
+   </tr>
+   <tr>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal><b>use_partial</b></p>
+    </td>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal>map partial slits</p>
+    </td>
+   </tr>
+   <tr>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal><b>use_holes</b></p>
+    </td>
+    <td style='padding:.75pt .75pt .75pt .75pt'>
+    <p class=MsoNormal>map alignment holes as well as slits </p>
+    </td>
+   </tr>
+  </table>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<h3>Details:</h3>
+
+<h3><span style='font-size:12.0pt'>map-spectra </span><span style='font-size:
+12.0pt;font-weight:normal'>first finds, for each slit, spectrum segments-
+ranges of wavelength- that fall on each chip. Wavelengths at which the object
+position along the slit is too close (a few pixels) to the chip edge are not
+included. If </span><span style='font-size:11.0pt;font-family:"Courier New";
+font-weight:normal'>minpixl</span><span style='font-size:12.0pt;font-weight:
+normal'> is set to a non-zero number, shorter segments are discarded. </span><span
+style='font-size:12.0pt'>map-spectra</span><span style='font-size:12.0pt;
+font-weight:normal'> does not map <i>partial</i> slits, those with an end which
+falls off the edge of the CCD at any wavelength, unless </span><span
+style='font-size:11.0pt;font-family:"Courier New";font-weight:normal'>use_partials</span><span
+style='font-size:12.0pt;font-weight:normal'> is set to </span><span
+style='font-size:11.0pt;font-family:"Courier New";font-weight:normal'>&#8220;y&#8221;</span><span
+style='font-size:12.0pt;font-family:"Courier New";font-weight:normal'>. </span><span
+style='font-size:12.0pt;font-weight:normal'>If partial slits are mapped,
+map-spectra finds the wavelength at which the smallest fraction of the slit is
+on a ccd, and uses this length for the entire spectrum. Slits that are not
+mapped, and partial slits that are mapped, are reported when the program exits.
+You must set <code><span style='font-family:"Times New Roman",serif'>use_holes</span></code>
+to &quot;y&quot; if you intend to use the alignment stars during the extraction
+in </span><span style='font-size:12.0pt;font-weight:normal'>extract-2dspec</span><span
+style='font-size:12.0pt;font-weight:normal'>.</span> </h3>
+
+<h3 style='margin-left:.5in;text-indent:-.25in'><span style='font-size:12.0pt;
+font-family:Symbol;font-weight:normal'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><span style='font-size:12.0pt;font-weight:normal'>partial slits
+may require special handling in later steps of the reduction. See the
+documentation of </span><span style='font-size:12.0pt'>adjust-map</span><span
+style='font-size:12.0pt;font-weight:normal'> and the COSMOS Cookbook for
+details. </span></h3>
+
+<h3 style='margin-left:.5in;text-indent:-.25in'><span style='font-size:12.0pt;
+font-family:Symbol;font-weight:normal'>&middot;<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><span style='font-size:12.0pt'>map-spectra</span><span
+style='font-size:12.0pt;font-weight:normal'> may not handle slits that are
+longer than the width of a ccd chip.</span></h3>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p><a href="../docs/Programs.html">Back to Programs</a> </p>
+
+</div>
+
+</body>
+
+</html>

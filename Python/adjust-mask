@@ -1,0 +1,328 @@
+#!/usr/bin/python
+#
+#  MARK-SLITS marks objects in a ds9 image, using positions calculated from either
+#         an obsdef file or a map files
+#
+#  Usage: mark-slits rame [-o obsdef file | -m map file]
+
+import numpy as np
+from pyds9 import *
+import cosmos as c
+import sys
+import os
+from math import *
+from ctypes import *
+import string
+from subprocess import call
+
+class obsdef(Structure):
+    _fields_ = [("instrument",c_char*10),
+                ("gr_order",c_int),
+                ("gr_angle",c_float),
+                ("temp",c_float),
+                ("alignrot",c_float),
+                ("grating",c_char*20),
+                ("dewoff",c_char*80),
+                ("camera",c_char*6),
+                ("mode",c_char*7),
+                ("mask",c_char*80),
+                ("nshuffle",c_int),
+                ("ranod",c_float),
+                ("decnod",c_float),
+                ("dewar",c_char*15),
+                ("distor",c_char*80)]
+
+libfile=os.environ['COSMOS_HOME'] + '/lib/libcosmopy.so' 
+cosmopy=cdll.LoadLibrary(libfile)
+
+#open display if not open
+display=DS9()
+#read parameter file
+
+parfile=c_char_p("mark-slits")
+if cosmopy.OpenCosParm(parfile) > 0:
+    c.die("Error opening parameter file")
+mark=c_char_p("                        ")
+linefile=c_char_p("                                        ")
+size=c_int()
+whhh=c_int(0)
+
+if cosmopy.ReadParm_s("MARK",mark)>0:
+    markv='x'
+else:
+    markv=mark.value
+if cosmopy.ReadParm_i("MARKSIZE",byref(size))>0:
+    size.value=10
+color=c_char_p("             ")
+if cosmopy.ReadParm_s("COLOR",color)>0:
+    colorv="red"
+else:
+    colorv=color.value
+msize=str(size.value)
+nlines=0
+haveline=0
+slitpos=0
+if(cosmopy.ReadParm_s("LINEFILE",linefile)) == 0:
+    haveline=1
+slip=c_char_p("                               ")
+if(cosmopy.ReadParm_s("PLOTPOS",slip)) == 0:
+    slp=slip.value
+    slp = string.lower(slp)
+    if "object" in slp:
+        slitpos=-1
+    elif "ends" in slp:
+        slitpos=1
+which=c_char_p("                        ")
+whsl=0
+if(cosmopy.ReadParm_s("WHICHSLITS",which)) == 0:
+    wch=which.value
+    wch = string.lower(wch)
+    if "partial" in wch:
+        whsl=-1
+    elif "full" in wch:
+        whsl=1
+
+#parse command line
+args=sys.argv[1:]
+haveobs=haveal=0
+frame='1'
+narg=len(args)
+clear=0
+havedewfile=0
+for i in range(narg):
+    if "-o" in args[i]:
+        obsfile=c_char_p(args[i+1])
+        haveobs=1
+    elif "-l" in args[i]:
+        linefile.value=args[i+1]
+        haveline=1
+    elif "-f" in args[i]:
+        alfile=args[i+1]
+        haveal=1
+    elif '-d' in args[i]:
+        havedewfile=1
+        dewofffile=args[i+1]
+    elif i==0 and args[i].isdigit:
+        frame=args[i]
+
+#go to desired frame
+
+lane="frame frameno " + frame
+display.set(lane)
+
+if (not haveobs or not haveal):
+    print "Usage adjust-offsets [frame] -o obsdef_file -f align_file [-l linelist OR linefile] \n"
+    sys.exit(0)
+
+#read obsdef file
+
+obsdata=obsdef()
+if(cosmopy.ReadObsDef(obsfile,byref(obsdata))):
+    print "Error reading observation definition file"
+    sys.exit(0)
+ma=obsdata.mask
+mf=ma + '.SMF'
+
+ #get SMF file, determine number of images to expect and current wavelength
+
+infile=open(mf,'r')
+nimage=0
+wavelength=6000.
+for line in infile:
+    if ('HOLE' in line or 'SLIT' in line):
+        nimage+=1
+    if('WAVELENGTH' in line):
+        a, wave=line.split()
+        wavelength=float(wave)
+infile.close()
+
+#if not direct get linelist
+
+md=obsdata.mode
+if 'DIRECT' in md:
+    haveline=0
+ll=c_float(0)
+lines=[float(0.)]
+if haveline:
+    lf=linefile.value
+    if lf.replace('.','',1).isdigit():
+        nlines=1
+        lines=[float(lf)]
+    else:
+        infile=open(lf,'r')
+        nlines=0
+        lines=[]
+        if not(os.path.isfile(lf)):
+            c.die("Cannot find spectral line file")
+        infile=open(lf,"r")
+        for line in infile:
+            l=line.split()
+            for x in l:
+                lines.append(float(x))
+                nlines+=1
+else:
+    nlines=1
+    lines=[wavelength]
+ll=(c_float*nlines)(*lines)
+
+nimage*=nlines
+nmarks = 2*nimage if slitpos > 0 else nimage
+arrayType=c_int*nmarks
+X=arrayType(*[1]*nmarks)
+Y=arrayType(*[1]*nmarks)
+nslit=c_int(0)
+nl=c_int(nlines)
+sltps=c_int(slitpos)
+dth=c_float()
+dsc=c_float()
+dx=c_float()
+dy=c_float()
+sc=c_float()
+sscc=c_char_p("scale")
+xrz=c_int()
+yrz=c_int()
+xrsz=c_char_p("xarsize")
+yrsz=c_char_p("yarsize")
+
+#display alignment image
+hd=plane=0
+frame='1'
+inst=obsdata.instrument
+afile=alfile
+if("IMACS" in inst):
+    if afile.count('_') > 0:
+        afile += '_'
+    image=os.environ['COSMOS_IMAGE_DIR'] +'/' + afile
+    c.dispn(image,display,hd,plane,frame,8)
+    direc=1
+else:
+    image=os.environ['COSMOS_IMAGE_DIR'] +'/' + afile
+    c.dispn(image,display,hd,plane,frame,1)
+    direc=-1
+
+#get BINNING
+
+lane=display.get('data image 1 1 2 1 yes')
+binx,biny=lane.split()
+if (binx != biny):
+    print "adjust-offsets does not support unequal x,y binning"
+    sys.exit(0)
+binn=int(binx)
+binning=c_int(binn)
+
+#loop through corrections
+for count in range(0,3):
+    outfile=open("/tmp/ds9.reg",'w')
+    display.set('regions delete all')
+    #calculate slit image positions
+    nslit=cosmopy.GetSlitXY8(obsfile,nl,ll,binning,sltps,whhh,X,Y)
+    if(cosmopy.Getchipdat_f(sscc,byref(sc))):
+        print "Dewar definition error"
+        sys.exit(0)
+    scale=sc.value
+    if(cosmopy.Getchipdat_i(xrsz,byref(xrz)) or cosmopy.Getchipdat_i(yrsz,byref(yrz))):
+        print "Dewar definition error"
+        sys.exit(0)
+    cenx=(xrz.value)/(2*binn)
+    ceny=(yrz.value)/(2*binn)
+
+    if nslit==0:
+        sys.exit(0)
+    for i in range(nslit):
+        xx=str(X[i])
+        yy=str(Y[i])
+        lane='image; point ' + xx + ' ' + yy+ ' # point = ' + markv + ' ' +msize + ',  color=' + colorv
+        outfile.write(lane + '\n')
+    outfile.close()
+    display.set('regions load /tmp/ds9.reg')
+
+    #determine OFFSETS
+    if(cosmopy.GetCof(byref(dth),byref(dsc),byref(dx),byref(dy))>0):
+        print "Error reading dewar offset file"
+        sys.exit(0)
+    dtheta=dth.value
+    dscale=dsc.value
+    deltax=dx.value
+    deltay=dy.value
+    if(count==0):
+        # X,Y offsets
+        print "Select a slit image near the field center (q to quit)\n"
+        line=display.get('imexam  any coordinate image')
+        if( 'q' in line or 'Q' in line):
+            sys.exit(0)
+        a,xp,yp=line.split()
+        xcpos=float(xp)
+        ycpos=float(yp)
+        print "Now click on its predicted location\n"
+        line=display.get('imexam  any coordinate image')
+        if( 'q' in line or 'Q' in line):
+            sys.exit(0)
+        a,xp,yp=line.split()
+        xcpred=float(xp)
+        ycpred=float(yp)
+        deltax+=(xcpred-xcpos)/scale
+        deltay+=direc*(ycpred-ycpos)/scale
+        dx.value=deltax
+        dy.value=deltay
+        cosmopy.SetCof(dth,dsc,dx,dy)
+    elif(count==1):
+        print "Select a slit image near the edge of the field (q to quit)"
+        line=display.get('imexam  any coordinate image')
+        if( 'q' in line or 'Q' in line):
+            sys.exit(0)
+        a,xp,yp=line.split()
+        xepos=float(xp)
+        yepos=float(yp)
+        print "Now click on its predicted location\n"
+        line=display.get('imexam  any coordinate image')
+        if( 'q' in line or 'Q' in line):
+            sys.exit(0)
+        a,xp,yp=line.split()
+        xepred=float(xp)
+        yepred=float(yp)
+        rat=sqrt(((xcpos-xepos)**2+(ycpos-yepos)**2)/((xcpos-xepred)**2+
+                  (ycpos-yepred)**2))
+        dscale-=(rat-1)
+        dsc.value=dscale
+        rad=sqrt((xepred-cenx)**2+(yepred-ceny)**2)
+        dif=sqrt((rat*(xepred-cenx)-xepos+cenx)**2+
+                 (rat*(yepred-ceny)-yepos+ceny)**2)
+        rot=dif/rad
+        #find sense of rotation
+        sense=1;
+        if(fabs(xepred-xepos)>fabs(yepred-yepos)):
+            if((yepred-ceny)*(xepred-xepos)>0):
+                sense=-1
+        else:
+            if((xepred-cenx)*(yepred-yepos)<0):
+                sense=-1
+        dtheta+=rot*sense*direc
+#        dtheta+=rot*sense
+        dth.value=dtheta
+        cosmopy.SetCof(dth,dsc,dx,dy)
+    elif(count==2):
+        break;
+
+#write new dewoff file update obsdef file
+
+line= raw_input("Save results? ")
+if('q' in line or  'Q' in line or 'n' in line or 'N' in line):
+    sys.exit(0)
+
+if(havedewfile):
+    alfile=dewofffile
+afile = alfile + ".dewoff"
+outfile=open(afile,'w')
+outfile.write("%7.2f %9.6f %6.3f %6.3f\n" %(dtheta*57.2958,
+              dscale,deltax,deltay))
+outfile.close
+newfile=obsfile.value + ".obsdef"
+oldfile=newfile + "%"
+call(["mv",newfile, oldfile])
+infile=open(oldfile,'r')
+outfile=open(newfile,'w')
+for line in infile:
+    if("DEWOFF" in line):
+        outfile.write("DEWOFF          %s\n" % (alfile))
+    else:
+        outfile.write(line)

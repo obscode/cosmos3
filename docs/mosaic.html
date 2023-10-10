@@ -1,0 +1,56 @@
+<html>
+<head>
+  <title>mosaic</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>mosaic</h1>
+<p>
+<b>mosaic</b> creates a mosaic image from the CCD fits files of a given exposure. The
+output image is a square of size 8192/binning. If not all 8 fits files are
+present, or if the files are subrasters, <b>mosaic</b> places the available images at
+their correct position within the mosaic image.
+</p>
+<br>
+
+<p>
+<table width=100%>
+<tr><td width="150px">USAGE<td><code>mosaic <i>frame</i></code>
+<tr><td>INPUT<td><code>frame</code> is the set of frames to be mosaiced together
+<tr><td>OUTPUT<td><code>frame_mos.fits</code> the mosaic frame
+<tr><td>PARAMETERS<td>none
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+The primary purpose of <b>mosaic</b> is to assemble the full IMACS camera image, for
+viewing and manipulation with IRAF routines. Note that the assembled image is
+not astrometrically accurate, the 8 chip images are placed immediately next to
+each other, with no attention to correct chip offsets and rotations. The
+coordinate system of the mosaiced image is, however, that used by the routines
+<b>apertures</b>, <b>spectral-lines</b>, <b>spectral-map</b>, and <b>adjust-offsets</b>.
+</p>
+<br>
+
+<p>
+The routine <b>display8</b> also displays the images of all 8 chips in a IRAF image
+window, with the same orientation and coordinate system. Which routine should
+you use?  If your only purpose is viewing the image, and if the image is  a
+full 8-chip 1x1 binned image, use <b>display8</b>; <b>mosaic</b> takes additional time to
+run, and fills your disk with additional large files. However, if you wish to
+do anything else with the assembled image (further processing, or examining
+with IRAF routines such as imexam), or it you are working binned data or with
+subrasters, you must use <b>mosaic</b>, since <b>display8</b> cannot handle these, and IRAF
+routines like imexam need a real file to work with.
+</p>
+<br>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>
+

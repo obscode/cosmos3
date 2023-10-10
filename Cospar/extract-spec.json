@@ -1,0 +1,19 @@
+{
+"MINLAMBDA": 0.0, 
+"SEARCH": 5, 
+"INIT_OFF": 0.0, 
+"OBJ_FRAC": 0.2, 
+"TRACE": "star", 
+"DELTALAM": 2.0, 
+"TRACE_ORDR": 3, 
+"HWIDTH": 10, 
+"USE_HOLES": 0, 
+"SUB_NS": 0.0, 
+"SAMPLING": "linear", 
+"DELTASLIT": 0.2, 
+"EDGE": 1, 
+"GAIN": 0.85, 
+"MAXLAMBDA": 10000.0, 
+"ALIGN": "star_ave", 
+"DIMENSION": 2
+}

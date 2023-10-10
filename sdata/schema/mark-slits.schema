@@ -1,0 +1,31 @@
+{
+	"$schema":	"http://json-schema.org/schema#",
+	"title":	"mark-slits schema",
+	"type":		"object",
+	"properties":	{
+		"LINEFILE": {
+			"type":	"string",
+			"description":	"line list file"},
+		"MARK": {
+			"type":	"string",
+			"enum":	["circle", "x", "box", "cross", "diamond"],
+			"description":	"circle, x, box, cross, or diamond"},
+		"MARKSIZE":{
+			"type":	"number",
+			"description":	"size of mark"},
+		"COLOR": {
+			"type":	"string",
+			"enum":	["black", "white", "red", "green", "blue"],
+			"description":	"mark color: black, white, red, blue, or green"},
+		"PLOTPOS": {
+			"type":	"string",
+			"enum":	["center", "object", "ends"],
+			"description": "plot position: center, object, or ends"},
+		"WHICHSLITS": {
+			"type":	"string",
+			"enum": ["all", "full", "partial"],
+			"description":	"plot which slits: all, full, or partial"}
+		}
+}
+
+				

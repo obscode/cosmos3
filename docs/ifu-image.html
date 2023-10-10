@@ -1,0 +1,50 @@
+<html>
+<head>
+  <title>ifu-image</title>
+</head>
+<body>
+
+<p><a href="Programs.html">Back to Programs</a></p>
+<h1>ifu-image</h1>
+<p>
+<b>ifu-image</b> reconstructs a direct image of the field of the two IFU bundles, from
+a set of IFU image files. The image of the object and field IFUs are stored in
+a 2-d fits file, the object image as the primary HDU, and the field image as
+the first fits extension HDU
+</p>
+<br>
+
+<p>
+<table width=100%>
+<tr><td width="150px">USAGE<td><code>ifu-image <i>framename</i></code>
+<tr><td>INPUT<td><code>framename</code> is a set of ifu direct image files
+<tr><td>OUTPUT<td><code>framename_ifu.fits</code>
+<tr><td valign="top">PARAMETERS<td>
+  <table width=100%>
+  <tr><td width="100px"><b>FLAT_FILE</b><td>name of flat field file to be used, or 'none'
+  <tr><td><b>OBSDEF</b><td>observation definition file for ifu image
+  </table>
+</table>
+</p>
+<br>
+
+<h3>Details:</h3>
+<p>
+If a flat-field file is specified in the parameter file, it will be used. This
+file must itself be an _ifu file, produced by <b>ifu-image</b> (with <code>FLAT_FILE</code> set to
+'none') from a direct IFU flat-field exposure.
+<b>ifu-image</b> requires 1x1 binning. It also requires either a full 2048x4096 frame,
+or a subraster with x width of 2048 and a y range extending to the top of the
+chip, i.e.  x: 1 - 2048  y: n - 4096.
+Because the individual fiber spots at the IFU output are small, good alignment
+is important to correctly reconstruct the image. If in any doubt, adjust the
+dewar offset file before running. The alignment of the image produced by <b>ifu-image</b> on the sky is TBD.
+</p>
+<br>
+
+<p>
+<a href="Programs.html">Back to Programs</a>
+</p>
+</body>
+</html>
+

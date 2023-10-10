@@ -1,0 +1,90 @@
+#!/usr/bin/python
+
+import sys
+import os
+import json
+import jsonschema
+from jsonschema import validate
+import re
+
+filename=sys.argv[1]
+parfile=os.environ['COSMOS_PAR_DIR'] + '/' + filename + '.json'
+if not os.path.exists(parfile):
+    print 'Cannot find parameter file', parfile
+    sys.exit(0)
+sch=os.environ['COSMOS_HOME'] + '/sdata/schema/' + sys.argv[1] + '.schema'
+if not os.path.exists(sch):
+    print 'Cannot find schema file', sch
+    sys.exit(0)
+infile=open(parfile,'r')
+sfile=open(sch,'r')
+schema=json.load(sfile)
+pars=json.load(infile)
+props=schema["properties"]
+
+#list parameters
+bad=0
+while(1):
+    os.system("clear")
+    print "type q to end:\n"
+    for key,value in pars.iteritems():
+        pp=props[key]
+        desc=pp['description']
+        print("%10s %15s   %s" %  (key, value, desc))
+    print ""
+    line="Change parameter:    "
+    if bad==1:
+         line = "Invalid parameter name. Change parameter:     "
+    elif bad==2:
+         line = " Invalid parameter value. Enter new value:   "
+    elif bad<0:
+         line = "Enter new value:   "
+    value=raw_input(line)
+    if(value=='q' or value=='Q'):
+        break
+    #is this a valid parameter?
+    if(bad==0 or bad==1):
+        value=value.upper()
+        if(not value in pars.keys()):
+            bad=1
+        else:
+            prname=value
+            bad=-1
+        continue
+    #is this a valid value:
+    else:
+        #workround for badorders order parameter
+        if filename=='badorders' and prname=='ORDERS':
+            prvalue={prname:value}
+            bad=0
+            pars[prname]=value
+        else:
+            #is entry a number:
+            if not re.search(r'[^0-9.\-]',value):
+                #float?
+                if re.search(r'\.',value):
+                    val=float(value)
+                else:
+                    val=int(value)
+            elif value.upper()=='Y' or value.upper()=='N'or value.upper()=='TRUE' or value.upper()=='FALSE':
+                if value.upper()=='Y' or value.upper()=='TRUE':
+                    val = True
+                else:
+                    val = False
+                value=val
+            else:
+                val=value
+            prvalue={prname:val}
+            try:
+                validate(prvalue,schema)
+                bad=0
+                pars[prname]=val
+            except:
+                bad=2
+
+#write new parameter file
+oldfile = parfile + '%'
+infile.close()
+os.rename(parfile,oldfile)
+outfile=open(parfile,'w')
+json.dump(pars,outfile,indent=0)

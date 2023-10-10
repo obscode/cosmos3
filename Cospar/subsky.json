@@ -1,0 +1,15 @@
+{
+"NOISE": 5.0, 
+"DELTAKNOT": 1, 
+"EDGE": 2, 
+"SIGLIMIT": 4.0, 
+"GAIN": 1.0, 
+"MAXLAMBDA": 10000.0, 
+"MEDBOX": 30, 
+"EXCLUDE": 3, 
+"SPL_ORDER": 3, 
+"MINLAMBDA": 0.0, 
+"DIAG_1": 8835, 
+"DIAG_0": 8825, 
+"2D_SPLINE": true
+}

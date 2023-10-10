@@ -1,0 +1,22 @@
+{
+"$schema":	"http://json-schema.org/schema#",
+"title":	"sumspec schema",
+"type":		"object",
+"properties":	{
+	"CLEAN":  {
+		"type":  "boolean",
+		"description":  "remove cosmic rays"},
+	"SIGLIMIT":  {
+		"type":  "number",
+		"description":  "CR rejection threshold in sigmas"},
+	"BOTH":  {
+		"type":  "boolean",
+		"description":  "remove positive and negative deviations?"},
+	"ITERATIONS":  {
+		"type":  "integer",
+		"description":  "iterations of CR removal"},
+	"GROW":  {
+		"type":  "integer",
+		"description":  "grow deleted region size"}
+	}
+}
